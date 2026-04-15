@@ -4,6 +4,11 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { trTR } from "@clerk/localizations";
 import "./globals.css";
 
+const hasClerkKeys = !!(
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
+  process.env.CLERK_SECRET_KEY
+);
+
 const playfair = Playfair_Display({
   variable: "--font-display",
   subsets: ["latin"],
@@ -56,7 +61,11 @@ export default function RootLayout({
       className={`${playfair.variable} ${cormorant.variable} ${libre.variable}`}
     >
       <body>
-        <ClerkProvider localization={trTR}>{children}</ClerkProvider>
+        {hasClerkKeys ? (
+          <ClerkProvider localization={trTR}>{children}</ClerkProvider>
+        ) : (
+          children
+        )}
       </body>
     </html>
   );
