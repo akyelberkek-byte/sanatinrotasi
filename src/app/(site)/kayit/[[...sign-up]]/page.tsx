@@ -1,20 +1,16 @@
-"use client";
+import type { Metadata } from "next";
+import KayitClient from "./KayitClient";
 
-import dynamic from "next/dynamic";
-
-const ClerkSignUp = dynamic(() => import("@/components/auth/SignUpContent"), {
-  ssr: false,
-  loading: () => (
-    <div className="text-center py-20">
-      <p className="font-serif text-warm-gray">Yükleniyor...</p>
-    </div>
-  ),
-});
+export const metadata: Metadata = {
+  title: "Kayit Ol",
+  description: "Sanatin Rotasi hesabi olusturun.",
+  robots: { index: false, follow: false },
+};
 
 export default function KayitPage() {
   return (
     <div className="max-w-md mx-auto px-6 py-20 flex justify-center">
-      <ClerkSignUp />
+      <KayitClient />
     </div>
   );
 }

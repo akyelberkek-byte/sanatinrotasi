@@ -55,8 +55,10 @@ const portableTextComponents = {
           <div className="relative aspect-video">
             <iframe
               src={`https://www.youtube.com/embed/${videoId}`}
+              title={value.caption || "YouTube video"}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
+              loading="lazy"
               className="absolute inset-0 w-full h-full"
             />
           </div>

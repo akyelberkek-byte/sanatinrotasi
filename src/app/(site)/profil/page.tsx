@@ -1,25 +1,21 @@
-"use client";
-
+import type { Metadata } from "next";
 import SectionLabel from "@/components/shared/SectionLabel";
-import dynamic from "next/dynamic";
+import ProfileClient from "./ProfileClient";
 
-const ClerkProfile = dynamic(() => import("@/components/auth/ProfileContent"), {
-  ssr: false,
-  loading: () => (
-    <div className="text-center py-20">
-      <p className="font-serif text-warm-gray">Yükleniyor...</p>
-    </div>
-  ),
-});
+export const metadata: Metadata = {
+  title: "Profilim",
+  description: "Sanatin Rotasi hesap profil sayfasi.",
+  robots: { index: false, follow: false },
+};
 
 export default function ProfilPage() {
   return (
     <div className="max-w-4xl mx-auto px-6 md:px-12 py-12">
       <header className="mb-8">
-        <SectionLabel label="Hesabım" className="mb-3 block" />
+        <SectionLabel label="Hesabim" className="mb-3 block" />
         <h1 className="font-display text-3xl font-bold text-ink">Profilim</h1>
       </header>
-      <ClerkProfile />
+      <ProfileClient />
     </div>
   );
 }

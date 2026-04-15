@@ -46,9 +46,10 @@ export default function HakkindaPage() {
             <div className="relative">
               <Image
                 src="/images/ela-kantarci.jpg"
-                alt="Ela Kantarcı"
+                alt="Ela Kantarci - Sanatin Rotasi Kurucu ve Kreatif Direktor"
                 width={300}
                 height={336}
+                loading="lazy"
                 className="w-full grayscale-[15%] hover:grayscale-0 transition-all duration-500"
               />
               <div className="absolute inset-[8px] border border-white/40 pointer-events-none" />

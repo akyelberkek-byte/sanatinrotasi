@@ -1,20 +1,16 @@
-"use client";
+import type { Metadata } from "next";
+import GirisClient from "./GirisClient";
 
-import dynamic from "next/dynamic";
-
-const ClerkSignIn = dynamic(() => import("@/components/auth/SignInContent"), {
-  ssr: false,
-  loading: () => (
-    <div className="text-center py-20">
-      <p className="font-serif text-warm-gray">Yükleniyor...</p>
-    </div>
-  ),
-});
+export const metadata: Metadata = {
+  title: "Giris Yap",
+  description: "Sanatin Rotasi hesabiniza giris yapin.",
+  robots: { index: false, follow: false },
+};
 
 export default function GirisPage() {
   return (
     <div className="max-w-md mx-auto px-6 py-20 flex justify-center">
-      <ClerkSignIn />
+      <GirisClient />
     </div>
   );
 }

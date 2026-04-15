@@ -33,6 +33,8 @@ export default function RouteCard({ route }: RouteCardProps) {
             src={urlFor(route.mainImage).width(600).height(400).url()}
             alt={route.title}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            loading="lazy"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink/40 to-transparent" />

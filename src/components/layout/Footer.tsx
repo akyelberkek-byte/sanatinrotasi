@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="border-t-2 border-ink mt-auto">
+    <footer className="border-t-2 border-ink mt-auto" role="contentinfo">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
           <div className="flex gap-6">
@@ -10,6 +10,7 @@ export default function Footer() {
               href="https://instagram.com/sanatinrotasi"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Instagram (yeni sekmede acilir)"
               className="font-sans text-xs uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors link-underline"
             >
               Instagram
@@ -18,16 +19,17 @@ export default function Footer() {
               href="https://youtube.com/@sanatinrotasi"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="YouTube (yeni sekmede acilir)"
               className="font-sans text-xs uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors link-underline"
             >
               YouTube
             </a>
           </div>
           <div className="font-sans text-xs text-warm-gray">
-            © 2026 Sanatın Rotası — Tüm hakları saklıdır.
+            &copy; {new Date().getFullYear()} Sanatin Rotasi &mdash; Tum haklari saklidir.
           </div>
         </div>
-        <div className="flex justify-center gap-6 pt-4 border-t border-ink/10">
+        <nav aria-label="Alt sayfa baglantilari" className="flex justify-center gap-6 pt-4 border-t border-ink/10">
           <Link
             href="/kvkk"
             className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray hover:text-accent transition-colors link-underline"
@@ -38,15 +40,15 @@ export default function Footer() {
             href="/acik-riza"
             className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray hover:text-accent transition-colors link-underline"
           >
-            Açık Rıza
+            Acik Riza
           </Link>
           <Link
             href="/iletisim"
             className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray hover:text-accent transition-colors link-underline"
           >
-            İletişim
+            Iletisim
           </Link>
-        </div>
+        </nav>
       </div>
     </footer>
   );

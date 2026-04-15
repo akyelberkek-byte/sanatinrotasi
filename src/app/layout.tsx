@@ -39,6 +39,10 @@ export const metadata: Metadata = {
   description:
     "Türkiye'nin sanat ve kültür platformu. Kurucu & Kreatif Direktör: Ela Kantarcı",
   metadataBase: new URL("https://sanatinrotasi.com"),
+  icons: {
+    icon: "/images/favicon.png",
+    apple: "/images/favicon.png",
+  },
   openGraph: {
     type: "website",
     locale: "tr_TR",
@@ -47,6 +51,24 @@ export const metadata: Metadata = {
     title: "Sanatın Rotası — Sanat & Kültür Platformu",
     description:
       "Türkiye'nin sanat ve kültür platformu. Kurucu & Kreatif Direktör: Ela Kantarcı",
+    images: [
+      {
+        url: "/images/logo.png",
+        width: 512,
+        height: 512,
+        alt: "Sanatın Rotası",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Sanatın Rotası — Sanat & Kültür Platformu",
+    description:
+      "Türkiye'nin sanat ve kültür platformu. Kurucu & Kreatif Direktör: Ela Kantarcı",
+    images: ["/images/logo.png"],
+  },
+  alternates: {
+    canonical: "https://sanatinrotasi.com",
   },
 };
 

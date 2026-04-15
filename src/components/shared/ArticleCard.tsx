@@ -33,8 +33,10 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
         <div className="relative overflow-hidden mb-4 aspect-[16/10]">
           <Image
             src={urlFor(article.mainImage).width(800).height(500).url()}
-            alt={article.title}
+            alt={article.mainImage.alt || article.title}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            loading="lazy"
             className="object-cover transition-transform duration-500 group-hover:scale-105 grayscale-[15%] group-hover:grayscale-0"
           />
           {article.category && (

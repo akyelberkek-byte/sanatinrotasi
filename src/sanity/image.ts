@@ -3,6 +3,7 @@ import { client } from "./client";
 
 const builder = createImageUrlBuilder(client);
 
-export function urlFor(source: any) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function urlFor(source: Record<string, any>) {
   return builder.image(source);
 }

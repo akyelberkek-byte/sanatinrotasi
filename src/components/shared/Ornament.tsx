@@ -9,7 +9,7 @@ export default function Ornament() {
         width={30}
         height={30}
         className="opacity-20"
-        aria-hidden
+        aria-hidden="true"
       />
     </div>
   );

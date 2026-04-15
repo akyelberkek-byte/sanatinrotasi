@@ -112,21 +112,21 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="border-b-2 border-ink">
+    <nav className="border-b-2 border-ink" aria-label="Ana menu">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-5 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
           <Image
             src="/images/logo.png"
-            alt="Sanatın Rotası"
+            alt="Sanatin Rotasi - Ana sayfa"
             width={45}
             height={45}
             className="transition-transform group-hover:scale-105"
           />
           <div>
-            <h1 className="font-display text-xl md:text-2xl font-bold tracking-tight text-ink leading-tight">
+            <span className="font-display text-xl md:text-2xl font-bold tracking-tight text-ink leading-tight block">
               Sanatın{" "}
               <span className="italic text-accent block md:inline">Rotası</span>
-            </h1>
+            </span>
           </div>
         </Link>
 
@@ -148,7 +148,9 @@ export default function Navbar() {
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="lg:hidden flex flex-col gap-1.5 p-2"
-          aria-label="Menü"
+          aria-label={mobileOpen ? "Menüyü kapat" : "Menüyü aç"}
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-menu"
         >
           <span className={`w-6 h-0.5 bg-ink transition-all ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
           <span className={`w-6 h-0.5 bg-ink transition-all ${mobileOpen ? "opacity-0" : ""}`} />
@@ -157,7 +159,7 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden border-t border-ink/10 bg-cream animate-fade-down">
+        <div id="mobile-menu" className="lg:hidden border-t border-ink/10 bg-cream animate-fade-down" role="navigation" aria-label="Mobil menü">
           <div className="px-6 py-4 flex flex-col gap-4">
             {NAV_LINKS.map((link) => (
               <Link

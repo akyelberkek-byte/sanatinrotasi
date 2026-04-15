@@ -38,25 +38,32 @@ export default function NewsletterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4" aria-label="Bulten aboneligi">
       <div className="flex flex-col sm:flex-row w-full max-w-md">
+        <label htmlFor="newsletter-email" className="sr-only">
+          E-posta adresiniz
+        </label>
         <input
+          id="newsletter-email"
           type="email"
           placeholder="E-posta adresiniz"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={status === "success"}
-          className="flex-1 px-4 py-3 border-l border-b border-t border-ink/20 bg-transparent font-serif text-base text-ink placeholder:text-warm-gray focus:outline-none focus:border-accent disabled:opacity-50"
+          autoComplete="email"
+          className="flex-1 px-4 py-3 border border-ink/20 sm:border-r-0 bg-transparent font-serif text-base text-ink placeholder:text-warm-gray focus:outline-none focus:border-accent disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={status === "success" || status === "loading"}
           className="px-6 py-3 bg-ink text-cream font-sans text-xs uppercase tracking-[0.2em] border border-ink hover:bg-accent hover:border-accent transition-colors disabled:bg-warm-gray disabled:border-warm-gray"
         >
-          {status === "success" ? "Kaydedildi" : status === "loading" ? "..." : "Kayıt Ol"}
+          {status === "success" ? "Kaydedildi" : status === "loading" ? "..." : "Kayit Ol"}
         </button>
       </div>
       <p
+        role={status === "error" || status === "success" ? "status" : undefined}
+        aria-live="polite"
         className={`font-sans text-xs ${status === "error" ? "text-accent" : status === "success" ? "text-accent" : "text-warm-gray"}`}
       >
         {message}

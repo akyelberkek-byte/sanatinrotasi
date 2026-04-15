@@ -17,7 +17,7 @@ interface EventCardProps {
     title: string;
     slug: { current: string };
     eventType: string;
-    date: string;
+    date?: string;
     location?: { name?: string; city?: string };
     mainImage?: any;
     price?: { isFree?: boolean; amount?: number };
@@ -26,9 +26,11 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const dateObj = new Date(event.date);
-  const day = dateObj.getDate();
-  const month = dateObj.toLocaleDateString("tr-TR", { month: "short" }).toUpperCase();
+  const dateObj = event.date ? new Date(event.date) : null;
+  const day = dateObj?.getDate() ?? "";
+  const month = dateObj
+    ? dateObj.toLocaleDateString("tr-TR", { month: "short" }).toUpperCase()
+    : "";
 
   return (
     <Link
@@ -41,6 +43,8 @@ export default function EventCard({ event }: EventCardProps) {
             src={urlFor(event.mainImage).width(600).height(340).url()}
             alt={event.title}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            loading="lazy"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute top-3 right-3 bg-cream/90 px-3 py-2 text-center">
