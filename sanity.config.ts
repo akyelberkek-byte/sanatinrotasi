@@ -10,8 +10,8 @@ import { structure } from "@/sanity/structure";
 export default defineConfig({
   name: "sanatinrotasi",
   title: "Sanatın Rotası",
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "5tddprs8",
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
 
   plugins: [
     structureTool({ structure }),
