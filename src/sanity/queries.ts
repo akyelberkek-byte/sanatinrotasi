@@ -1,0 +1,187 @@
+import { groq } from "next-sanity";
+
+// Site Settings
+export const SITE_SETTINGS_QUERY = groq`
+  *[_type == "siteSettings"][0] {
+    title,
+    description,
+    logo,
+    ogImage,
+    heroHeading,
+    heroSubheading,
+    heroImage,
+    manifesto,
+    socialLinks,
+    footerText,
+    topBarLeft,
+    topBarRight
+  }
+`;
+
+// Articles
+export const ARTICLES_QUERY = groq`
+  *[_type == "article"] | order(publishedAt desc) [0...$limit] {
+    _id,
+    title,
+    slug,
+    publishedAt,
+    excerpt,
+    mainImage,
+    featured,
+    author-> { name, slug, image },
+    category-> { title, slug, color }
+  }
+`;
+
+export const FEATURED_ARTICLES_QUERY = groq`
+  *[_type == "article" && featured == true] | order(publishedAt desc) [0...4] {
+    _id,
+    title,
+    slug,
+    publishedAt,
+    excerpt,
+    mainImage,
+    author-> { name, slug },
+    category-> { title, slug, color }
+  }
+`;
+
+export const ARTICLE_BY_SLUG_QUERY = groq`
+  *[_type == "article" && slug.current == $slug][0] {
+    _id,
+    title,
+    slug,
+    publishedAt,
+    excerpt,
+    mainImage,
+    body,
+    tags,
+    featured,
+    seo,
+    author-> { name, slug, image, role, bio, social },
+    category-> { title, slug, color }
+  }
+`;
+
+export const ARTICLES_BY_CATEGORY_QUERY = groq`
+  *[_type == "article" && category->slug.current == $categorySlug] | order(publishedAt desc) {
+    _id,
+    title,
+    slug,
+    publishedAt,
+    excerpt,
+    mainImage,
+    author-> { name, slug },
+    category-> { title, slug, color }
+  }
+`;
+
+// Categories
+export const CATEGORIES_QUERY = groq`
+  *[_type == "category"] | order(order asc) {
+    _id,
+    title,
+    slug,
+    description,
+    color,
+    "articleCount": count(*[_type == "article" && references(^._id)])
+  }
+`;
+
+// Events
+export const EVENTS_QUERY = groq`
+  *[_type == "event" && date >= now()] | order(date asc) [0...$limit] {
+    _id,
+    title,
+    slug,
+    eventType,
+    date,
+    endDate,
+    location,
+    mainImage,
+    price,
+    featured
+  }
+`;
+
+export const EVENT_BY_SLUG_QUERY = groq`
+  *[_type == "event" && slug.current == $slug][0] {
+    _id,
+    title,
+    slug,
+    eventType,
+    date,
+    endDate,
+    location,
+    mainImage,
+    description,
+    price,
+    externalUrl,
+    featured,
+    seo
+  }
+`;
+
+// Routes
+export const ROUTES_QUERY = groq`
+  *[_type == "route"] | order(_createdAt desc) {
+    _id,
+    title,
+    slug,
+    subtitle,
+    city,
+    mainImage,
+    duration,
+    difficulty,
+    featured,
+    "stopCount": count(stops)
+  }
+`;
+
+export const ROUTE_BY_SLUG_QUERY = groq`
+  *[_type == "route" && slug.current == $slug][0] {
+    _id,
+    title,
+    slug,
+    subtitle,
+    city,
+    mainImage,
+    description,
+    stops[] {
+      name,
+      description,
+      image,
+      location,
+      relatedArticle-> { title, slug }
+    },
+    duration,
+    difficulty,
+    tags,
+    featured,
+    seo
+  }
+`;
+
+// Authors
+export const AUTHOR_BY_SLUG_QUERY = groq`
+  *[_type == "author" && slug.current == $slug][0] {
+    _id,
+    name,
+    slug,
+    image,
+    role,
+    bio,
+    social
+  }
+`;
+
+// Pages
+export const PAGE_BY_SLUG_QUERY = groq`
+  *[_type == "page" && slug.current == $slug][0] {
+    _id,
+    title,
+    slug,
+    body,
+    seo
+  }
+`;
