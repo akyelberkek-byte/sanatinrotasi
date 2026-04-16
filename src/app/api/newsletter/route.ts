@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     // Hoşgeldin e-postası gönder
     await resend.emails.send({
-      from: "Sanatın Rotası <onboarding@resend.dev>",
+      from: "Sanatın Rotası <noreply@sanatinrotasi.com>",
       to: trimmedEmail,
       subject: "Rotaya Hoş Geldiniz!",
       html: `
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Yöneticiye bildirim
     await resend.emails.send({
-      from: "Sanatın Rotası <onboarding@resend.dev>",
+      from: "Sanatın Rotası <noreply@sanatinrotasi.com>",
       to: "akyelberke@gmail.com",
       subject: `Yeni bülten abonesi: ${trimmedEmail}`,
       html: `<p>Yeni bülten abonesi: <strong>${escapeHtml(trimmedEmail)}</strong></p>`,
