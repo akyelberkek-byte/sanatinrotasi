@@ -56,11 +56,11 @@ export default async function HomePage() {
       </header>
 
       {/* Editorial Section — Manifesto + Founder */}
-      <section className="grid grid-cols-1 md:grid-cols-[1fr_1px_1fr] gap-0 py-12 md:py-16 animate-fade-up stagger-2">
+      <section className="grid grid-cols-1 md:grid-cols-[1fr_1px_1fr] gap-0 py-12 md:py-16 animate-fade-up stagger-2 md:items-center">
         {/* Left — Manifesto */}
         <div className="pr-0 md:pr-10">
           <SectionLabel label="Manifesto" className="mb-4 block" />
-          <div className="font-serif text-lg md:text-xl leading-relaxed text-soft-black drop-cap">
+          <div className="font-serif text-xl md:text-2xl leading-relaxed text-soft-black drop-cap">
             <p>
               Her sanat eseri bir yolculuk, her sergi bir durak, her sanatçı bir rehberdir.
               Sanatın Rotası, Türkiye&apos;nin sanat ve kültür dünyasına açılan kapınız.
