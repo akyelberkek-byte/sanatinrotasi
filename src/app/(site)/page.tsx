@@ -31,7 +31,7 @@ export default async function HomePage() {
   ]);
 
   const logoUrl = settings?.logo?.asset
-    ? urlFor(settings.logo).width(200).height(200).url()
+    ? urlFor(settings.logo).width(512).height(512).url()
     : "/images/logo.png";
 
   const founderImageUrl = founder?.image?.asset

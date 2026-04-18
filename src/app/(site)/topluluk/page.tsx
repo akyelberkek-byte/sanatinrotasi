@@ -69,27 +69,29 @@ export default async function ToplulukPage() {
           { label: "Pinterest", url: settings?.socialLinks?.pinterest },
           { label: "Udemy", url: settings?.socialLinks?.udemy },
           { label: "Twitter", url: settings?.socialLinks?.twitter },
-        ].filter((s) => !!s.url) as { label: string; url: string }[];
-
-        if (socials.length === 0) return null;
+        ].filter((s) => s.label !== "Twitter" || !!s.url);
 
         return (
           <section className="mt-16 animate-fade-up stagger-3">
             <SectionLabel label="Sosyal Medya" className="mb-6 block" />
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {socials.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-8 border border-ink/10 hover:border-accent/30 transition-colors group"
-                >
-                  <h3 className="font-display text-xl font-bold text-ink group-hover:text-accent transition-colors">
-                    {s.label}
-                  </h3>
-                </a>
-              ))}
+              {socials.map((s) => {
+                const isExternal = !!s.url;
+                const href = s.url || "/";
+                return (
+                  <a
+                    key={s.label}
+                    href={href}
+                    target={isExternal ? "_blank" : undefined}
+                    rel={isExternal ? "noopener noreferrer" : undefined}
+                    className="block p-8 border border-ink/10 hover:border-accent/30 transition-colors group"
+                  >
+                    <h3 className="font-display text-xl font-bold text-ink group-hover:text-accent transition-colors">
+                      {s.label}
+                    </h3>
+                  </a>
+                );
+              })}
             </div>
           </section>
         );

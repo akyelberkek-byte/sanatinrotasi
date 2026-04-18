@@ -23,25 +23,38 @@ export default function Footer({
     { label: "Pinterest", url: pinterestUrl },
     { label: "Udemy", url: udemyUrl },
     { label: "Twitter", url: twitterUrl },
-  ].filter((l) => !!l.url) as { label: string; url: string }[];
+  ];
+
+  // Twitter geçici olarak gizli (link verilmezse gösterme)
+  const visibleLinks = socialLinks.filter(
+    (l) => l.label !== "Twitter" || !!l.url
+  );
 
   return (
     <footer className="border-t-2 border-ink mt-auto" role="contentinfo">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
           <div className="flex flex-wrap gap-4 md:gap-6 justify-center">
-            {socialLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${link.label} (yeni sekmede açılır)`}
-                className="font-sans text-xs uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors link-underline"
-              >
-                {link.label}
-              </a>
-            ))}
+            {visibleLinks.map((link) => {
+              const isExternal = !!link.url;
+              const href = link.url || "/";
+              return (
+                <a
+                  key={link.label}
+                  href={href}
+                  target={isExternal ? "_blank" : undefined}
+                  rel={isExternal ? "noopener noreferrer" : undefined}
+                  aria-label={
+                    isExternal
+                      ? `${link.label} (yeni sekmede açılır)`
+                      : link.label
+                  }
+                  className="font-sans text-xs uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors link-underline"
+                >
+                  {link.label}
+                </a>
+              );
+            })}
           </div>
           <div className="font-sans text-xs text-warm-gray text-center md:text-right">
             {footerText}

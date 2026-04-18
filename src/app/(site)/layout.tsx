@@ -11,7 +11,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const settings = await client.fetch(SITE_SETTINGS_QUERY).catch(() => null);
 
   const logoUrl = settings?.logo?.asset
-    ? urlFor(settings.logo).width(180).height(180).url()
+    ? urlFor(settings.logo).width(400).height(400).url()
     : undefined;
 
   return (
