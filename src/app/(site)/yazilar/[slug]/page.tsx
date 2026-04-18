@@ -1,11 +1,10 @@
 import { findArticleBySlug } from "@/sanity/lib/findArticle";
 import { urlFor } from "@/sanity/image";
-import { PortableText } from "@portabletext/react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import SectionLabel from "@/components/shared/SectionLabel";
 import type { Metadata } from "next";
+import PortableRenderer from "@/components/shared/PortableRenderer";
 
 export const revalidate = 60;
 
@@ -20,57 +19,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: article.seo?.metaDescription || article.excerpt,
   };
 }
-
-const portableTextComponents = {
-  types: {
-    image: ({ value }: any) => {
-      if (!value?.asset) return null;
-      return (
-        <figure className="my-8">
-          <Image
-            src={urlFor(value).width(1200).url()}
-            alt={value.caption || ""}
-            width={1200}
-            height={675}
-            className="w-full"
-          />
-          {value.caption && (
-            <figcaption className="font-sans text-xs text-warm-gray mt-2 text-center">
-              {value.caption}
-              {value.attribution && <span> — {value.attribution}</span>}
-            </figcaption>
-          )}
-        </figure>
-      );
-    },
-    youtube: ({ value }: any) => {
-      if (!value?.url) return null;
-      const videoId = value.url.match(
-        /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/
-      )?.[1];
-      if (!videoId) return null;
-      return (
-        <figure className="my-8">
-          <div className="relative aspect-video">
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}`}
-              title={value.caption || "YouTube video"}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              loading="lazy"
-              className="absolute inset-0 w-full h-full"
-            />
-          </div>
-          {value.caption && (
-            <figcaption className="font-sans text-xs text-warm-gray mt-2 text-center">
-              {value.caption}
-            </figcaption>
-          )}
-        </figure>
-      );
-    },
-  },
-};
 
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params;
@@ -90,13 +38,19 @@ export default async function ArticlePage({ params }: Props) {
     <article className="max-w-4xl mx-auto px-6 md:px-12 py-12">
       {/* Header */}
       <header className="mb-10 animate-fade-up">
-        {article.category && (
-          <Link
-            href={`/kategori/${article.category.slug.current}`}
-            className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-accent link-underline"
-          >
-            {article.category.title}
-          </Link>
+        {article.category?.title && (
+          article.category.slug?.current ? (
+            <Link
+              href={`/kategori/${article.category.slug.current}`}
+              className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-accent link-underline"
+            >
+              {article.category.title}
+            </Link>
+          ) : (
+            <span className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-accent">
+              {article.category.title}
+            </span>
+          )
         )}
         <h1 className="font-display text-3xl md:text-5xl font-bold text-ink mt-3 leading-tight">
           {article.title}
@@ -125,25 +79,34 @@ export default async function ArticlePage({ params }: Props) {
         </div>
       </header>
 
-      {/* Main image */}
-      {article.mainImage && (
-        <div className="relative mb-10 animate-fade-up stagger-1">
-          <Image
-            src={urlFor(article.mainImage).width(1200).height(675).url()}
-            alt={article.mainImage.alt || article.title}
-            width={1200}
-            height={675}
-            className="w-full"
-            priority
-          />
-        </div>
-      )}
+      {/* Main image — fallback to SEO ogImage if no mainImage */}
+      {(() => {
+        const heroImage = article.mainImage?.asset
+          ? article.mainImage
+          : article.seo?.ogImage?.asset
+            ? article.seo.ogImage
+            : null;
+        if (!heroImage) return null;
+        const heroUrl = urlFor(heroImage).width(1600).height(900).fit("max").url();
+        if (!heroUrl) return null;
+        return (
+          <div className="relative mb-10 animate-fade-up stagger-1">
+            <Image
+              src={heroUrl}
+              alt={heroImage.alt || article.title}
+              width={1600}
+              height={900}
+              className="w-full h-auto"
+              priority
+              unoptimized
+            />
+          </div>
+        );
+      })()}
 
       {/* Body */}
       <div className="portable-text animate-fade-up stagger-2">
-        {article.body && (
-          <PortableText value={article.body} components={portableTextComponents} />
-        )}
+        {article.body && <PortableRenderer value={article.body} />}
       </div>
 
       {/* Tags */}

@@ -141,11 +141,11 @@ export default function ContactForm() {
         disabled={status === "loading"}
         className="px-8 py-3 bg-ink text-cream font-sans text-xs uppercase tracking-[0.2em] border border-ink hover:bg-accent hover:border-accent transition-colors disabled:opacity-50"
       >
-        {status === "loading" ? "Gonderiliyor..." : "Gonder"}
+        {status === "loading" ? "Gönderiliyor..." : "Gönder"}
       </button>
       {status === "error" && (
         <p className="font-sans text-xs text-accent" role="alert">
-          Bir hata olustu, lutfen tekrar deneyin.
+          Bir hata oluştu, lütfen tekrar deneyin.
         </p>
       )}
     </form>

@@ -95,10 +95,20 @@ export const ARTICLE_BY_SLUG_QUERY = groq`
     publishedAt,
     excerpt,
     mainImage,
-    body,
+    body[] {
+      ...,
+      _type == "image" => {
+        ...,
+        asset->
+      }
+    },
     tags,
     featured,
-    seo,
+    seo {
+      metaTitle,
+      metaDescription,
+      ogImage
+    },
     author-> { name, slug, image, role, bio, social },
     category-> { title, slug, color }
   }
