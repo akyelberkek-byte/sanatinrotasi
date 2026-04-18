@@ -2,8 +2,58 @@
 
 import { useRef, useState } from "react";
 
-const MAX_TOTAL_BYTES = 80 * 1024 * 1024; // 80MB toplam
-const ACCEPT = "image/*,video/*";
+const MAX_TOTAL_BYTES = 250 * 1024 * 1024; // 250MB toplam
+
+// Kabul edilen dosya türleri — MIME ve uzantı listeleri
+const ACCEPTED_TYPES = {
+  image: {
+    label: "Görsel",
+    exts: ["jpg", "jpeg", "png", "webp", "gif", "heic", "tiff"],
+    mimes: [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "image/heic",
+      "image/tiff",
+    ],
+  },
+  video: {
+    label: "Video",
+    exts: ["mp4", "mov", "webm", "m4v", "avi", "mkv"],
+    mimes: [
+      "video/mp4",
+      "video/quicktime",
+      "video/webm",
+      "video/x-m4v",
+      "video/x-msvideo",
+      "video/x-matroska",
+    ],
+  },
+  audio: {
+    label: "Ses",
+    exts: ["mp3", "wav", "m4a", "aac", "ogg", "flac"],
+    mimes: [
+      "audio/mpeg",
+      "audio/mp3",
+      "audio/wav",
+      "audio/x-wav",
+      "audio/mp4",
+      "audio/aac",
+      "audio/ogg",
+      "audio/flac",
+    ],
+  },
+};
+
+const ACCEPT = [
+  ...ACCEPTED_TYPES.image.mimes,
+  ...ACCEPTED_TYPES.video.mimes,
+  ...ACCEPTED_TYPES.audio.mimes,
+  ...ACCEPTED_TYPES.image.exts.map((e) => `.${e}`),
+  ...ACCEPTED_TYPES.video.exts.map((e) => `.${e}`),
+  ...ACCEPTED_TYPES.audio.exts.map((e) => `.${e}`),
+].join(",");
 
 function humanSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -214,16 +264,42 @@ export default function ContactForm() {
           />
           <label
             htmlFor="contact-attachments"
-            className="cursor-pointer inline-flex flex-col items-center gap-2"
+            className="cursor-pointer inline-flex flex-col items-center gap-3"
           >
             <span className="font-sans text-xs uppercase tracking-[0.2em] text-ink">
               Dosya Seç
             </span>
-            <span className="font-serif text-sm text-warm-gray">
-              Sanatını tanıtmak için görsel veya video ekleyebilirsin
+            <span className="font-serif text-sm text-warm-gray max-w-md">
+              Sanatını tanıtmak için görsel, video veya ses dosyası ekleyebilirsin
             </span>
-            <span className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray/70">
-              Görsel · Video — Toplam 80 MB'a kadar
+            <div className="grid grid-cols-3 gap-4 mt-2 max-w-lg text-center">
+              <div>
+                <p className="font-sans text-[0.65rem] uppercase tracking-[0.15em] text-accent mb-1">
+                  Görsel
+                </p>
+                <p className="font-sans text-[0.6rem] text-warm-gray">
+                  JPG, PNG, WebP, GIF, HEIC
+                </p>
+              </div>
+              <div>
+                <p className="font-sans text-[0.65rem] uppercase tracking-[0.15em] text-accent mb-1">
+                  Video
+                </p>
+                <p className="font-sans text-[0.6rem] text-warm-gray">
+                  MP4, MOV, WebM, M4V
+                </p>
+              </div>
+              <div>
+                <p className="font-sans text-[0.65rem] uppercase tracking-[0.15em] text-accent mb-1">
+                  Ses
+                </p>
+                <p className="font-sans text-[0.6rem] text-warm-gray">
+                  MP3, WAV, M4A, FLAC
+                </p>
+              </div>
+            </div>
+            <span className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray/70 mt-2">
+              Toplam 250 MB'a kadar
             </span>
           </label>
         </div>

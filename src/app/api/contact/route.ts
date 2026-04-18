@@ -4,7 +4,10 @@ import { writeClient } from "@/sanity/writeClient";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const MAX_TOTAL_BYTES = 80 * 1024 * 1024; // 80MB
+export const runtime = "nodejs";
+export const maxDuration = 300; // 5 dakika — büyük dosyalar için
+
+const MAX_TOTAL_BYTES = 250 * 1024 * 1024; // 250MB
 
 function escapeHtml(input: string): string {
   return String(input ?? "")
@@ -91,7 +94,7 @@ export async function POST(request: NextRequest) {
     const totalBytes = attachmentFiles.reduce((sum, f) => sum + f.size, 0);
     if (totalBytes > MAX_TOTAL_BYTES) {
       return NextResponse.json(
-        { error: "Dosyaların toplam boyutu 80 MB'ı aşıyor." },
+        { error: "Dosyaların toplam boyutu 250 MB'ı aşıyor." },
         { status: 400 }
       );
     }
@@ -134,7 +137,7 @@ export async function POST(request: NextRequest) {
 
     await resend.emails.send({
       from: "Sanatın Rotası İletişim <onboarding@resend.dev>",
-      to: ["akyelberke@gmail.com", "sanatinrotasii@gmail.com"],
+      to: ["akyelberke@gmail.com", "ssanatinrotasii@gmail.com"],
       subject: `İletişim Formu: ${subject}`,
       replyTo: email,
       html: `
