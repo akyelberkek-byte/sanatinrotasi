@@ -9,6 +9,7 @@ export const siteSettings = defineType({
     { name: "hero", title: "Ana Sayfa — Hero" },
     { name: "manifesto", title: "Ana Sayfa — Manifesto" },
     { name: "founding", title: "Nasıl Kuruldu" },
+    { name: "submitArt", title: "Sanatını Tanıt" },
     { name: "sections", title: "Bölüm Başlıkları" },
     { name: "newsletter", title: "Bülten" },
     { name: "social", title: "Sosyal Medya" },
@@ -142,6 +143,53 @@ export const siteSettings = defineType({
       type: "portableText",
       group: "founding",
       description: "Ana sayfa ve Hakkında sayfasında gösterilen kuruluş hikayesi",
+    }),
+
+    // SANATINI TANIT
+    defineField({
+      name: "submitArtLabel",
+      title: "Bölüm Etiketi",
+      type: "string",
+      group: "submitArt",
+      initialValue: "Sanatını Tanıt",
+    }),
+    defineField({
+      name: "submitArtHeading",
+      title: "Bölüm Başlığı — İlk Kısım",
+      type: "string",
+      group: "submitArt",
+      initialValue: "Sanatını",
+    }),
+    defineField({
+      name: "submitArtHeadingItalic",
+      title: "Bölüm Başlığı — İtalik Kısım",
+      type: "string",
+      group: "submitArt",
+      initialValue: "Tanıt",
+    }),
+    defineField({
+      name: "submitArtDescription",
+      title: "Açıklama Metni",
+      type: "text",
+      rows: 4,
+      group: "submitArt",
+      initialValue:
+        "Sanatın Rotası'nda sanatçılara ve üretimlere yer vermeyi önemsiyoruz. Sen de kendi hikâyeni bizimle paylaşabilir, röportaj talebinde bulunabilir veya sanatını tanıtabilirsin.",
+    }),
+    defineField({
+      name: "submitArtCtaText",
+      title: "Buton Metni",
+      type: "string",
+      group: "submitArt",
+      initialValue: "İletişime Geç",
+    }),
+    defineField({
+      name: "submitArtCtaUrl",
+      title: "Buton Bağlantısı",
+      type: "string",
+      group: "submitArt",
+      initialValue: "/iletisim",
+      description: "Örn: '/iletisim' veya 'mailto:iletisim@sanatinrotasi.com'",
     }),
 
     // BÖLÜM BAŞLIKLARI

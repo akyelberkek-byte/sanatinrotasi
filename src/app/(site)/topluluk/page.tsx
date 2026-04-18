@@ -41,8 +41,36 @@ export default async function ToplulukPage() {
         )}
       </header>
 
+      {/* Sanatını Tanıt */}
+      {settings?.submitArtDescription && (
+        <section className="mb-16 p-8 md:p-12 border-2 border-accent/30 bg-accent/5 animate-fade-up stagger-1 text-center">
+          <SectionLabel
+            label={settings?.submitArtLabel || "Sanatını Tanıt"}
+            className="mb-3 block"
+          />
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-ink mb-4 leading-tight">
+            {settings?.submitArtHeading || "Sanatını"}{" "}
+            <span className="italic text-accent">
+              {settings?.submitArtHeadingItalic || "Tanıt"}
+            </span>
+          </h2>
+          <p className="font-serif text-base md:text-lg leading-relaxed text-soft-black mb-6 max-w-2xl mx-auto whitespace-pre-line">
+            {settings.submitArtDescription}
+          </p>
+          {settings?.submitArtCtaText && (
+            <a
+              href={settings?.submitArtCtaUrl || "/iletisim"}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-cream font-sans text-xs uppercase tracking-[0.2em] border-2 border-accent hover:bg-accent-dark hover:border-accent-dark transition-colors"
+            >
+              {settings.submitArtCtaText}
+              <span aria-hidden="true">→</span>
+            </a>
+          )}
+        </section>
+      )}
+
       {/* Newsletter */}
-      <section className="mb-16 p-8 md:p-12 border-2 border-ink animate-fade-up stagger-1">
+      <section className="mb-16 p-8 md:p-12 border-2 border-ink animate-fade-up stagger-2">
         <h2 className="font-display text-2xl font-bold text-ink mb-2 text-center">
           {settings?.newsletterTitle || "Bülten"}{" "}
           <span className="italic text-accent">{settings?.newsletterTitleItalic || ""}</span>

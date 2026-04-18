@@ -146,6 +146,36 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* Sanatını Tanıt */}
+      {settings?.submitArtDescription && (
+        <section className="py-12 md:py-16 border-t-2 border-ink animate-fade-up stagger-3">
+          <div className="max-w-3xl mx-auto text-center">
+            <SectionLabel
+              label={settings?.submitArtLabel || "Sanatını Tanıt"}
+              className="mb-4 block"
+            />
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-ink mb-6 leading-tight">
+              {settings?.submitArtHeading || "Sanatını"}{" "}
+              <span className="italic text-accent">
+                {settings?.submitArtHeadingItalic || "Tanıt"}
+              </span>
+            </h2>
+            <p className="font-serif text-lg md:text-xl leading-relaxed text-soft-black mb-8 max-w-2xl mx-auto whitespace-pre-line">
+              {settings.submitArtDescription}
+            </p>
+            {settings?.submitArtCtaText && (
+              <Link
+                href={settings?.submitArtCtaUrl || "/iletisim"}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-cream font-sans text-sm uppercase tracking-[0.2em] border-2 border-accent hover:bg-accent-dark hover:border-accent-dark transition-colors"
+              >
+                {settings.submitArtCtaText}
+                <span aria-hidden="true">→</span>
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Categories */}
       {categories && categories.length > 0 && (
         <section className="py-10 border-t-2 border-ink animate-fade-up stagger-3">
