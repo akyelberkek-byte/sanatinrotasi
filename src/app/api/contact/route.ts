@@ -7,7 +7,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export const runtime = "nodejs";
 export const maxDuration = 300; // 5 dakika — büyük dosyalar için
 
-const MAX_TOTAL_BYTES = 250 * 1024 * 1024; // 250MB
+const MAX_TOTAL_BYTES = 4 * 1024 * 1024; // 4MB — Vercel Hobby serverless limit
 
 function escapeHtml(input: string): string {
   return String(input ?? "")
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
     let email = "";
     let subject = "";
     let message = "";
+    let externalLink = "";
     let attachmentFiles: File[] = [];
 
     if (contentType.includes("multipart/form-data")) {
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
       email = String(form.get("email") || "").trim();
       subject = String(form.get("subject") || "").trim();
       message = String(form.get("message") || "").trim();
+      externalLink = String(form.get("externalLink") || "").trim();
       attachmentFiles = form
         .getAll("attachments")
         .filter((v): v is File => v instanceof File && v.size > 0);
@@ -74,6 +76,7 @@ export async function POST(request: NextRequest) {
       email = String(json.email || "").trim();
       subject = String(json.subject || "").trim();
       message = String(json.message || "").trim();
+      externalLink = String(json.externalLink || "").trim();
     }
 
     if (!name || !email || !subject || !message) {
@@ -94,7 +97,7 @@ export async function POST(request: NextRequest) {
     const totalBytes = attachmentFiles.reduce((sum, f) => sum + f.size, 0);
     if (totalBytes > MAX_TOTAL_BYTES) {
       return NextResponse.json(
-        { error: "Dosyaların toplam boyutu 250 MB'ı aşıyor." },
+        { error: "Dosyaların toplam boyutu 4 MB'ı aşıyor. Daha büyük dosyalar için mesaja WeTransfer/Drive linki ekleyin." },
         { status: 400 }
       );
     }
@@ -110,6 +113,15 @@ export async function POST(request: NextRequest) {
         // Yüklenemeyen dosyayı atla, maili yine de gönder
       }
     }
+
+    // External link (WeTransfer / Drive / Vimeo)
+    const externalLinkHtml = externalLink
+      ? `
+        <h3 style="font-size: 16px; margin-top: 24px;">Büyük Dosya Linki</h3>
+        <p style="padding: 12px 16px; background: #ebe6db; border-left: 3px solid #c45d3e;">
+          <a href="${escapeHtml(externalLink)}" target="_blank" style="color: #c45d3e; word-break: break-all;">${escapeHtml(externalLink)}</a>
+        </p>`
+      : "";
 
     // Email içeriği
     const attachmentsHtml =
@@ -148,6 +160,7 @@ export async function POST(request: NextRequest) {
           <p><strong>Konu:</strong> ${escapeHtml(subject)}</p>
           <hr style="border: none; border-top: 1px solid #ebe6db;" />
           <p style="white-space: pre-wrap;">${escapeHtml(message)}</p>
+          ${externalLinkHtml}
           ${attachmentsHtml}
         </div>
       `,

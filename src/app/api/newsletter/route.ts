@@ -53,12 +53,23 @@ export async function POST(request: NextRequest) {
       `,
     });
 
-    // Yöneticiye bildirim
+    // Yöneticilere bildirim
     await resend.emails.send({
       from: "Sanatın Rotası <noreply@sanatinrotasi.com>",
-      to: "akyelberke@gmail.com",
+      to: ["ssanatinrotasii@gmail.com", "akyelberke@gmail.com"],
       subject: `Yeni bülten abonesi: ${trimmedEmail}`,
-      html: `<p>Yeni bülten abonesi: <strong>${escapeHtml(trimmedEmail)}</strong></p>`,
+      html: `
+        <div style="font-family: Georgia, serif; max-width: 500px; padding: 20px; color: #1a1a18;">
+          <h2 style="font-size: 18px; margin-bottom: 12px;">🎨 Yeni Bülten Abonesi</h2>
+          <p style="font-size: 15px;">Sanatın Rotası bültenine yeni bir kayıt geldi:</p>
+          <p style="font-size: 16px; padding: 12px 16px; background: #ebe6db; border-left: 3px solid #c45d3e;">
+            <strong>${escapeHtml(trimmedEmail)}</strong>
+          </p>
+          <p style="font-size: 12px; color: #b8b0a2; margin-top: 20px;">
+            Bu mesaj otomatik olarak Sanatın Rotası tarafından gönderildi.
+          </p>
+        </div>
+      `,
     });
 
     return NextResponse.json({ success: true });

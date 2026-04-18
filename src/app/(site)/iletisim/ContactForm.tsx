@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-const MAX_TOTAL_BYTES = 250 * 1024 * 1024; // 250MB toplam
+const MAX_TOTAL_BYTES = 4 * 1024 * 1024; // 4MB toplam (Vercel serverless limit)
 
 // Kabul edilen dosya türleri — MIME ve uzantı listeleri
 const ACCEPTED_TYPES = {
@@ -67,6 +67,7 @@ export default function ContactForm() {
     email: "",
     subject: "",
     message: "",
+    externalLink: "",
   });
   const [files, setFiles] = useState<File[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
@@ -100,7 +101,9 @@ export default function ContactForm() {
 
     if (overLimit) {
       setErrorMsg(
-        `Dosyaların toplam boyutu ${humanSize(MAX_TOTAL_BYTES)} sınırını aşıyor.`
+        `Dosyaların toplam boyutu ${humanSize(
+          MAX_TOTAL_BYTES
+        )} sınırını aşıyor. Daha büyük dosyalar için "Büyük Dosya Linki" alanına WeTransfer / Google Drive linki yapıştırabilirsin.`
       );
       setStatus("error");
       return;
@@ -114,6 +117,9 @@ export default function ContactForm() {
       body.append("email", formData.email);
       body.append("subject", formData.subject);
       body.append("message", formData.message);
+      if (formData.externalLink.trim()) {
+        body.append("externalLink", formData.externalLink.trim());
+      }
       for (const file of files) {
         body.append("attachments", file, file.name);
       }
@@ -127,7 +133,13 @@ export default function ContactForm() {
 
       if (res.ok) {
         setStatus("success");
-        setFormData({ name: "", email: "", subject: "", message: "" });
+        setFormData({
+          name: "",
+          email: "",
+          subject: "",
+          message: "",
+          externalLink: "",
+        });
         setFiles([]);
       } else {
         setStatus("error");
@@ -299,7 +311,7 @@ export default function ContactForm() {
               </div>
             </div>
             <span className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray/70 mt-2">
-              Toplam 250 MB'a kadar
+              Toplam 4 MB'a kadar
             </span>
           </label>
         </div>
@@ -342,6 +354,35 @@ export default function ContactForm() {
             </li>
           </ul>
         )}
+      </div>
+
+      {/* Büyük dosyalar için link alanı */}
+      <div>
+        <label
+          htmlFor="contact-external-link"
+          className="block font-sans text-[0.65rem] uppercase tracking-[0.2em] text-warm-gray mb-2"
+        >
+          Büyük Dosya Linki{" "}
+          <span className="lowercase tracking-normal text-warm-gray/70">
+            (zorunlu değil)
+          </span>
+        </label>
+        <input
+          id="contact-external-link"
+          type="url"
+          placeholder="https://wetransfer.com/... · https://drive.google.com/... · https://vimeo.com/..."
+          maxLength={500}
+          value={formData.externalLink}
+          onChange={(e) =>
+            setFormData({ ...formData, externalLink: e.target.value })
+          }
+          className="w-full px-4 py-3 border border-ink/20 bg-transparent font-serif text-base text-ink focus:outline-none focus:border-accent"
+        />
+        <p className="font-sans text-[0.65rem] text-warm-gray mt-2 leading-relaxed">
+          4 MB&apos;dan büyük dosyalar için{" "}
+          <strong>WeTransfer, Google Drive, Dropbox, Vimeo veya YouTube</strong>{" "}
+          gibi bir servise yükleyip linkini buraya yapıştırabilirsin.
+        </p>
       </div>
 
       <button
