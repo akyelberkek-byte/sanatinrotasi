@@ -47,6 +47,10 @@ export default async function HomePage() {
         <p className="font-sans text-[0.7rem] uppercase tracking-[0.3em] text-warm-gray mt-6">
           Türkiye&apos;nin Sanat & Kültür Platformu
         </p>
+        <p className="font-serif text-lg md:text-xl font-bold text-ink mt-6 max-w-2xl mx-auto leading-relaxed">
+          Sanatın Rotası, sanatçıları, sergileri ve yaratıcı üretimleri keşfetmek
+          isteyenler için bir içerik platformudur.
+        </p>
       </header>
 
       {/* Editorial Section — Manifesto + Founder */}
