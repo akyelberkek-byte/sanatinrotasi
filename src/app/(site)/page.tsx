@@ -30,11 +30,11 @@ export default async function HomePage() {
     client.fetch(FOUNDER_QUERY),
   ]);
 
-  const logoUrl = settings?.logo
+  const logoUrl = settings?.logo?.asset
     ? urlFor(settings.logo).width(200).height(200).url()
     : "/images/logo.png";
 
-  const founderImageUrl = founder?.image
+  const founderImageUrl = founder?.image?.asset
     ? urlFor(founder.image).width(840).height(940).url()
     : "/images/ela-kantarci.jpg";
 
@@ -47,7 +47,7 @@ export default async function HomePage() {
           alt="Sanatın Rotası Logo"
           width={90}
           height={90}
-          unoptimized={!!settings?.logo}
+          unoptimized={!!settings?.logo?.asset}
           className="mx-auto mb-6"
           priority
         />
@@ -97,7 +97,7 @@ export default async function HomePage() {
                 width={420}
                 height={470}
                 loading="lazy"
-                unoptimized={!!founder.image}
+                unoptimized={!!founder.image?.asset}
                 className="w-full grayscale-[15%] hover:grayscale-0 transition-all duration-500"
               />
               <div className="absolute inset-[8px] border border-white/40 pointer-events-none" />

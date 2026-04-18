@@ -10,7 +10,9 @@ export const revalidate = 60;
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const settings = await client.fetch(SITE_SETTINGS_QUERY).catch(() => null);
 
-  const logoUrl = settings?.logo ? urlFor(settings.logo).width(180).height(180).url() : undefined;
+  const logoUrl = settings?.logo?.asset
+    ? urlFor(settings.logo).width(180).height(180).url()
+    : undefined;
 
   return (
     <div className="flex flex-col min-h-screen">

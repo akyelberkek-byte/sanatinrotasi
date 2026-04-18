@@ -30,7 +30,7 @@ export default async function HakkindaPage() {
     client.fetch(SITE_SETTINGS_QUERY),
   ]);
 
-  const founderImageUrl = founder?.image
+  const founderImageUrl = founder?.image?.asset
     ? urlFor(founder.image).width(400).height(448).url()
     : "/images/ela-kantarci.jpg";
 
@@ -65,7 +65,7 @@ export default async function HakkindaPage() {
                   width={300}
                   height={336}
                   loading="lazy"
-                  unoptimized={!!founder.image}
+                  unoptimized={!!founder.image?.asset}
                   className="w-full grayscale-[15%] hover:grayscale-0 transition-all duration-500"
                 />
                 <div className="absolute inset-[8px] border border-white/40 pointer-events-none" />
