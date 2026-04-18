@@ -87,6 +87,17 @@ export default async function HakkindaPage() {
                   {founder.homepageBio}
                 </p>
               ) : null}
+              {founder.social?.instagram && (
+                <a
+                  href={founder.social.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 mt-6 px-5 py-3 bg-ink text-cream font-sans text-[0.7rem] uppercase tracking-[0.2em] border border-ink hover:bg-accent hover:border-accent transition-colors"
+                >
+                  Beni Takip Et
+                  <span aria-hidden="true">→</span>
+                </a>
+              )}
             </div>
           </div>
         </section>
