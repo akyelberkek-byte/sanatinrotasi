@@ -33,11 +33,11 @@ const libre = Libre_Franklin({
 
 export const metadata: Metadata = {
   title: {
-    default: "Sanatın Rotası — Sanat & Kültür Platformu",
+    default: "Sanatın Rotası — Sanatın İzini Sür!",
     template: "%s — Sanatın Rotası",
   },
   description:
-    "Türkiye'nin sanat ve kültür platformu. Kurucu & Sanat İçeriği Üreticisi: Ela Kantarcı",
+    "Türkiye'nin sanat ve kültür platformu — sanatçılar, sergiler ve yaratıcı üretimler için. Kurucu: Ela Kantarcı",
   metadataBase: new URL("https://sanatinrotasi.com"),
   icons: {
     icon: "/images/favicon.png",
@@ -48,9 +48,9 @@ export const metadata: Metadata = {
     locale: "tr_TR",
     url: "https://sanatinrotasi.com",
     siteName: "Sanatın Rotası",
-    title: "Sanatın Rotası — Sanat & Kültür Platformu",
+    title: "Sanatın Rotası — Sanatın İzini Sür!",
     description:
-      "Türkiye'nin sanat ve kültür platformu. Kurucu & Sanat İçeriği Üreticisi: Ela Kantarcı",
+      "Türkiye'nin sanat ve kültür platformu — sanatçılar, sergiler ve yaratıcı üretimler için. Kurucu: Ela Kantarcı",
     images: [
       {
         url: "/images/logo.png",
@@ -62,9 +62,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "Sanatın Rotası — Sanat & Kültür Platformu",
+    title: "Sanatın Rotası — Sanatın İzini Sür!",
     description:
-      "Türkiye'nin sanat ve kültür platformu. Kurucu & Sanat İçeriği Üreticisi: Ela Kantarcı",
+      "Türkiye'nin sanat ve kültür platformu — sanatçılar, sergiler ve yaratıcı üretimler için. Kurucu: Ela Kantarcı",
     images: ["/images/logo.png"],
   },
   alternates: {
