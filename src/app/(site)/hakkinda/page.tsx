@@ -46,7 +46,7 @@ export default function HakkindaPage() {
             <div className="relative">
               <Image
                 src="/images/ela-kantarci.jpg"
-                alt="Ela Kantarcı — Sanatın Rotası Kurucu ve Kreatif Direktör"
+                alt="Ela Kantarcı — Sanatın Rotası Kurucu ve Sanat İçeriği Üreticisi"
                 width={300}
                 height={336}
                 loading="lazy"
@@ -58,7 +58,7 @@ export default function HakkindaPage() {
           <div>
             <h2 className="font-display text-2xl font-bold text-ink">Ela Kantarcı</h2>
             <p className="font-sans text-[0.7rem] uppercase tracking-[0.2em] text-accent mt-1 mb-4">
-              Kurucu & Kreatif Direktör
+              Kurucu & Sanat İçeriği Üreticisi
             </p>
             <div className="font-serif text-lg leading-relaxed text-soft-black space-y-4">
               <p>

@@ -1,6 +1,6 @@
 export const SITE_NAME = "Sanatın Rotası";
 export const SITE_DESCRIPTION =
-  "Türkiye'nin sanat ve kültür platformu. Kurucu & Kreatif Direktör: Ela Kantarcı";
+  "Türkiye'nin sanat ve kültür platformu. Kurucu & Sanat İçeriği Üreticisi: Ela Kantarcı";
 export const SITE_URL = "https://sanatinrotasi.com";
 
 export const COLORS = {

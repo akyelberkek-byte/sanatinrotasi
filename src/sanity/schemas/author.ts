@@ -28,7 +28,7 @@ export const author = defineType({
       name: "role",
       title: "Rol",
       type: "string",
-      description: "Ör: Kurucu & Kreatif Direktör",
+      description: "Ör: Kurucu & Sanat İçeriği Üreticisi",
     }),
     defineField({
       name: "bio",

@@ -84,7 +84,7 @@ export default async function HomePage() {
           <div className="relative mb-4">
             <Image
               src="/images/ela-kantarci.jpg"
-              alt="Ela Kantarcı — Sanatın Rotası Kurucu ve Kreatif Direktör"
+              alt="Ela Kantarcı — Sanatın Rotası Kurucu ve Sanat İçeriği Üreticisi"
               width={600}
               height={672}
               loading="lazy"
@@ -94,7 +94,7 @@ export default async function HomePage() {
           </div>
           <h3 className="font-display text-xl font-bold text-ink">Ela Kantarcı</h3>
           <p className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-accent mt-1 mb-3">
-            Kurucu & Kreatif Direktör
+            Kurucu & Sanat İçeriği Üreticisi
           </p>
           <p className="font-serif text-base leading-relaxed text-soft-black italic">
             Multidisipliner bir bakış açısıyla sanata yaklaşan, Eskişehir&apos;in kültür
