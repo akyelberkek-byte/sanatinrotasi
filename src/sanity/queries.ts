@@ -1,20 +1,46 @@
 import { groq } from "next-sanity";
 
-// Site Settings
+// Site Settings — tüm site metinleri
 export const SITE_SETTINGS_QUERY = groq`
   *[_type == "siteSettings"][0] {
     title,
     description,
     logo,
     ogImage,
-    heroHeading,
-    heroSubheading,
-    heroImage,
-    manifesto,
-    socialLinks,
-    footerText,
     topBarLeft,
-    topBarRight
+    topBarRight,
+    footerText,
+    heroHeading,
+    heroHeadingItalic,
+    heroSubheading,
+    heroDescription,
+    manifestoLabel,
+    manifesto,
+    founderLabel,
+    categoriesLabel,
+    latestArticlesLabel,
+    upcomingEventsLabel,
+    artRoutesLabel,
+    viewAllLabel,
+    newsletterTitle,
+    newsletterTitleItalic,
+    newsletterDescription,
+    newsletterNote,
+    socialLinks
+  }
+`;
+
+// Founder — ana sayfa için öne çıkarılmış yazar
+export const FOUNDER_QUERY = groq`
+  *[_type == "author" && featured == true][0] {
+    _id,
+    name,
+    slug,
+    image,
+    role,
+    homepageBio,
+    bio,
+    social
   }
 `;
 
@@ -181,6 +207,11 @@ export const PAGE_BY_SLUG_QUERY = groq`
     _id,
     title,
     slug,
+    sectionLabel,
+    headingPrefix,
+    headingHighlight,
+    subtitle,
+    lastUpdated,
     body,
     seo
   }

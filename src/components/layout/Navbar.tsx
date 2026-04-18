@@ -108,18 +108,24 @@ function AuthButtons() {
   }
 }
 
-export default function Navbar() {
+interface NavbarProps {
+  logoUrl?: string;
+}
+
+export default function Navbar({ logoUrl }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const logo = logoUrl || "/images/logo.png";
 
   return (
     <nav className="border-b-2 border-ink" aria-label="Ana menü">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-5 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
           <Image
-            src="/images/logo.png"
+            src={logo}
             alt="Sanatın Rotası - Ana sayfa"
             width={45}
             height={45}
+            unoptimized={logoUrl ? true : false}
             className="transition-transform group-hover:scale-105"
           />
           <div>

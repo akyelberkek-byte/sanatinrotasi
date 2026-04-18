@@ -31,10 +31,24 @@ export const author = defineType({
       description: "Ör: Kurucu & Sanat İçeriği Üreticisi",
     }),
     defineField({
+      name: "homepageBio",
+      title: "Ana Sayfa Biyografi (Kısa)",
+      type: "text",
+      rows: 8,
+      description: "Ana sayfada fotoğrafın altında görünen kısa biyografi",
+    }),
+    defineField({
       name: "bio",
-      title: "Biyografi",
-      type: "array",
-      of: [{ type: "block" }],
+      title: "Detaylı Biyografi",
+      type: "portableText",
+      description: "Hakkında sayfasında ve yazar profilinde görünen uzun biyografi",
+    }),
+    defineField({
+      name: "featured",
+      title: "Ana Sayfa'da Kurucu Olarak Göster",
+      type: "boolean",
+      description: "Ana sayfadaki 'Kurucu' bölümünde bu yazarı göster",
+      initialValue: false,
     }),
     defineField({
       name: "social",
