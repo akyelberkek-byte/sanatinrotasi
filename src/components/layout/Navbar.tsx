@@ -22,6 +22,7 @@ try {
 const NAV_LINKS = [
   { href: "/", label: "Ana Sayfa" },
   { href: "/yazilar", label: "Yazılar" },
+  { href: "/roportajlar", label: "Röportajlar" },
   { href: "/rotalar", label: "Rotalar" },
   { href: "/etkinlikler", label: "Etkinlikler" },
   { href: "/hakkinda", label: "Hakkında" },
