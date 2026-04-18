@@ -226,6 +226,18 @@ export const AUTHOR_BY_SLUG_QUERY = groq`
   }
 `;
 
+// Comments — per article
+export const COMMENTS_BY_ARTICLE_QUERY = groq`
+  *[_type == "comment" && article._ref == $articleId && approved == true]
+    | order(createdAt asc) {
+    _id,
+    authorName,
+    authorImage,
+    body,
+    createdAt
+  }
+`;
+
 // Pages
 export const PAGE_BY_SLUG_QUERY = groq`
   *[_type == "page" && slug.current == $slug][0] {

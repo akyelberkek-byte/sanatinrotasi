@@ -1,6 +1,7 @@
 import { article } from "./article";
 import { author } from "./author";
 import { category } from "./category";
+import { comment } from "./comment";
 import { event } from "./event";
 import { page } from "./page";
 import { route } from "./route";
@@ -14,6 +15,7 @@ export const schemaTypes = [
   article,
   author,
   category,
+  comment,
   event,
   page,
   route,

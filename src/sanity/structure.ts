@@ -33,6 +33,15 @@ export const structure: StructureResolver = (S) =>
         .schemaType("event")
         .child(S.documentTypeList("event").title("Etkinlikler")),
 
+      S.listItem()
+        .title("Yorumlar")
+        .schemaType("comment")
+        .child(
+          S.documentTypeList("comment")
+            .title("Yorumlar")
+            .defaultOrdering([{ field: "createdAt", direction: "desc" }])
+        ),
+
       S.divider(),
 
       // Yönetim

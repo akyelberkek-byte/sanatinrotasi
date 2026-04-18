@@ -1,10 +1,15 @@
 import { findArticleBySlug } from "@/sanity/lib/findArticle";
 import { urlFor } from "@/sanity/image";
+import { client } from "@/sanity/client";
+import { COMMENTS_BY_ARTICLE_QUERY } from "@/sanity/queries";
+import { isAdminEmail } from "@/lib/admin";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import PortableRenderer from "@/components/shared/PortableRenderer";
+import CommentsSection from "@/components/shared/CommentsSection";
+import { currentUser } from "@clerk/nextjs/server";
 
 export const revalidate = 60;
 
@@ -25,6 +30,27 @@ export default async function ArticlePage({ params }: Props) {
   const article = await findArticleBySlug(slug);
 
   if (!article) notFound();
+
+  // Fetch comments for this article (in parallel with Clerk user lookup)
+  const [comments, user] = await Promise.all([
+    client
+      .fetch(COMMENTS_BY_ARTICLE_QUERY, { articleId: article._id })
+      .catch(() => []),
+    currentUser().catch(() => null),
+  ]);
+
+  const currentUserInfo = user
+    ? {
+        id: user.id,
+        name:
+          [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+          user.username ||
+          "Anonim",
+        image: user.imageUrl || undefined,
+      }
+    : null;
+
+  const isAdmin = isAdminEmail(user?.emailAddresses?.[0]?.emailAddress);
 
   const date = article.publishedAt
     ? new Date(article.publishedAt).toLocaleDateString("tr-TR", {
@@ -145,6 +171,15 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         </div>
       )}
+
+      {/* Comments */}
+      <CommentsSection
+        articleId={article._id}
+        articleSlug={article.slug.current}
+        initialComments={comments || []}
+        currentUser={currentUserInfo}
+        isAdmin={isAdmin}
+      />
     </article>
   );
 }
