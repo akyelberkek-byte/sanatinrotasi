@@ -49,7 +49,9 @@ export default async function HomePage() {
         </p>
         <p className="font-serif text-lg md:text-xl font-bold text-ink mt-6 max-w-2xl mx-auto leading-relaxed">
           Sanatın Rotası, sanatçıları, sergileri ve yaratıcı üretimleri keşfetmek
-          isteyenler için bir içerik platformudur.
+          isteyenler için
+          <br />
+          bir içerik platformudur.
         </p>
       </header>
 
