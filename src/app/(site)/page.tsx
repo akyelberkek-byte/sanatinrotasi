@@ -51,9 +51,9 @@ export default async function HomePage() {
           className="mx-auto mb-6 w-[130px] md:w-[160px] h-auto"
           priority
         />
-        <h1 className="font-display text-5xl md:text-7xl lg:text-[7rem] font-black text-ink leading-[0.9] tracking-tight">
-          {settings?.heroHeading || "Sanatın"}
-          <span className="block font-serif italic text-accent font-light text-[0.7em]">
+        <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[6.5rem] font-black text-ink leading-[1] tracking-tight whitespace-nowrap">
+          {settings?.heroHeading || "Sanatın"}{" "}
+          <span className="font-serif italic text-accent font-light">
             {settings?.heroHeadingItalic || "Rotası"}
           </span>
         </h1>

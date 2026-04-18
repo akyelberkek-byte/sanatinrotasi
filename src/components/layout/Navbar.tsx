@@ -20,6 +20,7 @@ try {
 }
 
 const NAV_LINKS = [
+  { href: "/", label: "Ana Sayfa" },
   { href: "/yazilar", label: "Yazılar" },
   { href: "/roportajlar", label: "Röportajlar" },
   { href: "/rotalar", label: "Rotalar" },
@@ -136,17 +137,17 @@ export default function Navbar({ logoUrl }: NavbarProps) {
           </div>
         </Link>
 
-        <div className="hidden lg:flex items-center gap-4 xl:gap-6">
+        <div className="hidden lg:flex items-center gap-3 xl:gap-5">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="font-sans text-[0.65rem] xl:text-[0.7rem] uppercase tracking-[0.15em] xl:tracking-[0.2em] text-soft-black hover:text-accent transition-colors link-underline whitespace-nowrap"
+              className="font-sans text-[0.6rem] xl:text-[0.65rem] font-semibold uppercase tracking-[0.12em] xl:tracking-[0.15em] text-ink hover:text-accent transition-colors link-underline whitespace-nowrap"
             >
               {link.label}
             </Link>
           ))}
-          <div className="ml-2 xl:ml-4">
+          <div className="ml-1 xl:ml-3">
             <AuthButtons />
           </div>
         </div>
