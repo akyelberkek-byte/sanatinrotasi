@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { urlFor } from "@/sanity/image";
+import { turkishSlugify } from "@/sanity/lib/slugify";
 
 interface ArticleCardProps {
   article: {
@@ -26,7 +27,7 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
 
   return (
     <Link
-      href={`/yazilar/${article.slug.current}`}
+      href={`/yazilar/${turkishSlugify(article.slug?.current || "")}`}
       className={`group block ${featured ? "" : "border-t-2 border-ink pt-4"}`}
     >
       {article.mainImage && (

@@ -68,8 +68,9 @@ export const ARTICLES_QUERY = groq`
   }
 `;
 
+// Ana sayfadaki "Son Yazılar" — tüm yazılardan en yeniler (featured kısıtı yok)
 export const FEATURED_ARTICLES_QUERY = groq`
-  *[_type == "article" && featured == true] | order(publishedAt desc) [0...4] {
+  *[_type == "article"] | order(publishedAt desc, _createdAt desc) [0...4] {
     _id,
     title,
     slug,
@@ -79,6 +80,11 @@ export const FEATURED_ARTICLES_QUERY = groq`
     author-> { name, slug },
     category-> { title, slug, color }
   }
+`;
+
+// Tüm yazıların slug'ları — 404 fallback için
+export const ALL_ARTICLE_SLUGS_QUERY = groq`
+  *[_type == "article" && defined(slug.current)] { "slug": slug.current }
 `;
 
 export const ARTICLE_BY_SLUG_QUERY = groq`

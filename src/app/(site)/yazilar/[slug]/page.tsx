@@ -1,5 +1,4 @@
-import { client } from "@/sanity/client";
-import { ARTICLE_BY_SLUG_QUERY } from "@/sanity/queries";
+import { findArticleBySlug } from "@/sanity/lib/findArticle";
 import { urlFor } from "@/sanity/image";
 import { PortableText } from "@portabletext/react";
 import Image from "next/image";
@@ -14,7 +13,7 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const article = await client.fetch(ARTICLE_BY_SLUG_QUERY, { slug });
+  const article = await findArticleBySlug(slug);
   if (!article) return {};
   return {
     title: article.seo?.metaTitle || article.title,
@@ -75,7 +74,7 @@ const portableTextComponents = {
 
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params;
-  const article = await client.fetch(ARTICLE_BY_SLUG_QUERY, { slug });
+  const article = await findArticleBySlug(slug);
 
   if (!article) notFound();
 
