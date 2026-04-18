@@ -8,6 +8,7 @@ export const siteSettings = defineType({
     { name: "general", title: "Genel" },
     { name: "hero", title: "Ana Sayfa — Hero" },
     { name: "manifesto", title: "Ana Sayfa — Manifesto" },
+    { name: "founding", title: "Nasıl Kuruldu" },
     { name: "sections", title: "Bölüm Başlıkları" },
     { name: "newsletter", title: "Bülten" },
     { name: "social", title: "Sosyal Medya" },
@@ -117,6 +118,30 @@ export const siteSettings = defineType({
       type: "string",
       group: "manifesto",
       initialValue: "Kurucu",
+    }),
+
+    // NASIL KURULDU
+    defineField({
+      name: "foundingStoryLabel",
+      title: "Bölüm Etiketi",
+      type: "string",
+      group: "founding",
+      initialValue: "Nasıl Kuruldu",
+      description: "Başlığın üzerindeki küçük etiket (ör. 'Nasıl Kuruldu')",
+    }),
+    defineField({
+      name: "foundingStoryHeading",
+      title: "Bölüm Başlığı",
+      type: "string",
+      group: "founding",
+      initialValue: "Sanatın Rotası Nasıl Kuruldu?",
+    }),
+    defineField({
+      name: "foundingStory",
+      title: "Nasıl Kuruldu İçeriği",
+      type: "portableText",
+      group: "founding",
+      description: "Ana sayfa ve Hakkında sayfasında gösterilen kuruluş hikayesi",
     }),
 
     // BÖLÜM BAŞLIKLARI

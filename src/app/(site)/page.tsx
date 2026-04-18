@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { PortableText } from "@portabletext/react";
 import { client } from "@/sanity/client";
 import { urlFor } from "@/sanity/image";
+import PortableRenderer from "@/components/shared/PortableRenderer";
 import {
   FEATURED_ARTICLES_QUERY,
   EVENTS_QUERY,
@@ -74,7 +74,7 @@ export default async function HomePage() {
           <SectionLabel label={settings?.manifestoLabel || "Manifesto"} className="mb-4 block" />
           <div className="font-serif text-xl md:text-2xl leading-relaxed text-soft-black drop-cap portable-text">
             {settings?.manifesto ? (
-              <PortableText value={settings.manifesto} />
+              <PortableRenderer value={settings.manifesto} />
             ) : (
               <p>
                 Her sanat eseri bir yolculuk, her sergi bir durak, her sanatçı bir rehberdir.
@@ -116,6 +116,24 @@ export default async function HomePage() {
           </div>
         )}
       </section>
+
+      {/* Founding Story */}
+      {settings?.foundingStory && settings.foundingStory.length > 0 && (
+        <section className="py-12 md:py-16 border-t-2 border-ink animate-fade-up stagger-3">
+          <div className="max-w-3xl mx-auto text-center">
+            <SectionLabel
+              label={settings?.foundingStoryLabel || "Nasıl Kuruldu"}
+              className="mb-4 block"
+            />
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-ink mb-8 leading-tight">
+              {settings?.foundingStoryHeading || "Sanatın Rotası Nasıl Kuruldu?"}
+            </h2>
+            <div className="font-serif text-lg md:text-xl leading-relaxed text-soft-black portable-text text-left md:text-center">
+              <PortableRenderer value={settings.foundingStory} />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Categories */}
       {categories && categories.length > 0 && (

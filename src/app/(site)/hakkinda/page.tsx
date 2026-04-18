@@ -1,8 +1,12 @@
-import { PortableText } from "@portabletext/react";
+import PortableRenderer from "@/components/shared/PortableRenderer";
 import Image from "next/image";
 import { client } from "@/sanity/client";
 import { urlFor } from "@/sanity/image";
-import { PAGE_BY_SLUG_QUERY, FOUNDER_QUERY } from "@/sanity/queries";
+import {
+  PAGE_BY_SLUG_QUERY,
+  FOUNDER_QUERY,
+  SITE_SETTINGS_QUERY,
+} from "@/sanity/queries";
 import SectionLabel from "@/components/shared/SectionLabel";
 import type { Metadata } from "next";
 
@@ -20,9 +24,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HakkindaPage() {
-  const [page, founder] = await Promise.all([
+  const [page, founder, settings] = await Promise.all([
     client.fetch(PAGE_BY_SLUG_QUERY, { slug: "hakkinda" }),
     client.fetch(FOUNDER_QUERY),
+    client.fetch(SITE_SETTINGS_QUERY),
   ]);
 
   const founderImageUrl = founder?.image
@@ -75,7 +80,7 @@ export default async function HakkindaPage() {
               )}
               {founder.bio && founder.bio.length > 0 ? (
                 <div className="font-serif text-lg leading-relaxed text-soft-black portable-text">
-                  <PortableText value={founder.bio} />
+                  <PortableRenderer value={founder.bio} />
                 </div>
               ) : founder.homepageBio ? (
                 <p className="font-serif text-lg leading-relaxed text-soft-black whitespace-pre-line">
@@ -87,10 +92,26 @@ export default async function HakkindaPage() {
         </section>
       )}
 
+      {/* Founding Story */}
+      {settings?.foundingStory && settings.foundingStory.length > 0 && (
+        <section className="mb-16 border-t-2 border-ink pt-12 animate-fade-up stagger-2">
+          <SectionLabel
+            label={settings?.foundingStoryLabel || "Nasıl Kuruldu"}
+            className="mb-4 block"
+          />
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-ink mb-8 leading-tight">
+            {settings?.foundingStoryHeading || "Sanatın Rotası Nasıl Kuruldu?"}
+          </h2>
+          <div className="font-serif text-lg md:text-xl leading-relaxed text-soft-black portable-text">
+            <PortableRenderer value={settings.foundingStory} />
+          </div>
+        </section>
+      )}
+
       {/* Page Body (Manifesto, Vizyon, Misyon ve diğer içerikler) */}
       {page?.body && (
-        <section className="animate-fade-up stagger-2 portable-text">
-          <PortableText value={page.body} />
+        <section className="animate-fade-up stagger-3 portable-text">
+          <PortableRenderer value={page.body} />
         </section>
       )}
     </div>
