@@ -62,12 +62,21 @@ export default function HakkindaPage() {
             </p>
             <div className="font-serif text-lg leading-relaxed text-soft-black space-y-4">
               <p>
-                Multidisipliner bir bakış açısıyla sanata yaklaşan, Eskişehir&apos;in kültür
-                sahnesini Türkiye&apos;ye taşımayı hedefleyen bir sanat tutkunu.
+                Sanata multidisipliner bir bakış açısıyla yaklaşan bir içerik
+                üreticisidir. Eskişehir&apos;in kültür sahnesini görünür kılmayı
+                ve bu üretimi daha geniş kitlelerle buluşturmayı amaçlar.
               </p>
               <p>
-                Sanatın Rotası, Ela&apos;nın sanata olan tutkusunu ve editöryel vizyonunu
-                bir araya getiren bir platform olarak doğdu.
+                Güzel Sanatlar Eğitimi bölümünü tamamladıktan sonra yüksek
+                lisansını Güzel Sanatlar alanında tamamlamış; sanatın teorik ve
+                pratik boyutlarını bir arada ele alma yaklaşımı geliştirmiştir.
+              </p>
+              <p>
+                Sanatın Rotası&apos;nı, sanatçıların üretim süreçlerini görünür
+                kılmak ve sanat deneyimini daha erişilebilir hale getirmek
+                amacıyla kurmuştur. Röportajlar, saha gözlemleri ve özgün
+                içeriklerle sanatın yalnızca görünen yüzünü değil, arkasındaki
+                hikâyeleri de anlatır.
               </p>
             </div>
           </div>

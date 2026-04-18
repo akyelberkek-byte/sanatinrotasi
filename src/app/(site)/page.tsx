@@ -81,7 +81,7 @@ export default async function HomePage() {
         {/* Right — Founder */}
         <div className="pl-0 md:pl-10 mt-10 md:mt-0">
           <SectionLabel label="Kurucu" className="mb-4 block" />
-          <div className="relative mb-4">
+          <div className="relative mb-4 max-w-[420px]">
             <Image
               src="/images/ela-kantarci.jpg"
               alt="Ela Kantarcı — Sanatın Rotası Kurucu ve Sanat İçeriği Üreticisi"
@@ -96,9 +96,17 @@ export default async function HomePage() {
           <p className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-accent mt-1 mb-3">
             Kurucu & Sanat İçeriği Üreticisi
           </p>
-          <p className="font-serif text-base leading-relaxed text-soft-black italic">
-            Multidisipliner bir bakış açısıyla sanata yaklaşan, Eskişehir&apos;in kültür
-            sahnesini Türkiye&apos;ye taşımayı hedefleyen bir sanat tutkunu.
+          <p className="font-serif text-base leading-relaxed text-soft-black">
+            Sanata multidisipliner bir bakış açısıyla yaklaşan bir içerik
+            üreticisidir. Eskişehir&apos;in kültür sahnesini görünür kılmayı ve
+            bu üretimi daha geniş kitlelerle buluşturmayı amaçlar. Güzel Sanatlar
+            Eğitimi bölümünü tamamladıktan sonra yüksek lisansını Güzel Sanatlar
+            alanında tamamlamış; sanatın teorik ve pratik boyutlarını bir arada
+            ele alma yaklaşımı geliştirmiştir. Sanatın Rotası&apos;nı,
+            sanatçıların üretim süreçlerini görünür kılmak ve sanat deneyimini
+            daha erişilebilir hale getirmek amacıyla kurmuştur. Röportajlar,
+            saha gözlemleri ve özgün içeriklerle sanatın yalnızca görünen yüzünü
+            değil, arkasındaki hikâyeleri de anlatır.
           </p>
         </div>
       </section>
