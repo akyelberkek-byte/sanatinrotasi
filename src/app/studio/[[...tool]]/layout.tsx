@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sanatin Rotasi — Admin Panel",
-  description: "Icerik yonetim paneli",
+  title: "Sanatın Rotası — Admin Panel",
+  description: "İçerik yönetim paneli",
   robots: { index: false, follow: false },
 };
 

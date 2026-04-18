@@ -46,7 +46,7 @@ export default function HakkindaPage() {
             <div className="relative">
               <Image
                 src="/images/ela-kantarci.jpg"
-                alt="Ela Kantarci - Sanatin Rotasi Kurucu ve Kreatif Direktor"
+                alt="Ela Kantarcı — Sanatın Rotası Kurucu ve Kreatif Direktör"
                 width={300}
                 height={336}
                 loading="lazy"

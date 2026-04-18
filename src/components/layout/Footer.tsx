@@ -10,7 +10,7 @@ export default function Footer() {
               href="https://instagram.com/sanatinrotasi"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Instagram (yeni sekmede acilir)"
+              aria-label="Instagram (yeni sekmede açılır)"
               className="font-sans text-xs uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors link-underline"
             >
               Instagram
@@ -19,17 +19,17 @@ export default function Footer() {
               href="https://youtube.com/@sanatinrotasi"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="YouTube (yeni sekmede acilir)"
+              aria-label="YouTube (yeni sekmede açılır)"
               className="font-sans text-xs uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors link-underline"
             >
               YouTube
             </a>
           </div>
           <div className="font-sans text-xs text-warm-gray">
-            &copy; {new Date().getFullYear()} Sanatin Rotasi &mdash; Tum haklari saklidir.
+            © {new Date().getFullYear()} Sanatın Rotası — Tüm hakları saklıdır.
           </div>
         </div>
-        <nav aria-label="Alt sayfa baglantilari" className="flex justify-center gap-6 pt-4 border-t border-ink/10">
+        <nav aria-label="Alt sayfa bağlantıları" className="flex justify-center gap-6 pt-4 border-t border-ink/10">
           <Link
             href="/kvkk"
             className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray hover:text-accent transition-colors link-underline"
@@ -40,13 +40,13 @@ export default function Footer() {
             href="/acik-riza"
             className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray hover:text-accent transition-colors link-underline"
           >
-            Acik Riza
+            Açık Rıza
           </Link>
           <Link
             href="/iletisim"
             className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray hover:text-accent transition-colors link-underline"
           >
-            Iletisim
+            İletişim
           </Link>
         </nav>
       </div>

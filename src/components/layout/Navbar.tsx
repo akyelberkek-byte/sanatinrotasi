@@ -112,12 +112,12 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="border-b-2 border-ink" aria-label="Ana menu">
+    <nav className="border-b-2 border-ink" aria-label="Ana menü">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-5 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
           <Image
             src="/images/logo.png"
-            alt="Sanatin Rotasi - Ana sayfa"
+            alt="Sanatın Rotası - Ana sayfa"
             width={45}
             height={45}
             className="transition-transform group-hover:scale-105"

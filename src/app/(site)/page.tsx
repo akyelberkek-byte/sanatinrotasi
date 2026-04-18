@@ -78,7 +78,7 @@ export default async function HomePage() {
           <div className="relative mb-4">
             <Image
               src="/images/ela-kantarci.jpg"
-              alt="Ela Kantarci - Sanatin Rotasi Kurucu ve Kreatif Direktor"
+              alt="Ela Kantarcı — Sanatın Rotası Kurucu ve Kreatif Direktör"
               width={600}
               height={672}
               loading="lazy"

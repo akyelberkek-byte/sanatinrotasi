@@ -38,7 +38,7 @@ export default function NewsletterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4" aria-label="Bulten aboneligi">
+    <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4" aria-label="Bülten aboneliği">
       <div className="flex flex-col sm:flex-row w-full max-w-md">
         <label htmlFor="newsletter-email" className="sr-only">
           E-posta adresiniz
@@ -58,7 +58,7 @@ export default function NewsletterForm() {
           disabled={status === "success" || status === "loading"}
           className="px-6 py-3 bg-ink text-cream font-sans text-xs uppercase tracking-[0.2em] border border-ink hover:bg-accent hover:border-accent transition-colors disabled:bg-warm-gray disabled:border-warm-gray"
         >
-          {status === "success" ? "Kaydedildi" : status === "loading" ? "..." : "Kayit Ol"}
+          {status === "success" ? "Kaydedildi" : status === "loading" ? "..." : "Kayıt Ol"}
         </button>
       </div>
       <p

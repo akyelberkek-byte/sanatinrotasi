@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import GirisClient from "./GirisClient";
 
 export const metadata: Metadata = {
-  title: "Giris Yap",
-  description: "Sanatin Rotasi hesabiniza giris yapin.",
+  title: "Giriş Yap",
+  description: "Sanatın Rotası hesabınıza giriş yapın.",
   robots: { index: false, follow: false },
 };
 
