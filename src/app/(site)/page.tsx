@@ -45,10 +45,10 @@ export default async function HomePage() {
         <Image
           src={logoUrl}
           alt="Sanatın Rotası Logo"
-          width={90}
-          height={90}
+          width={260}
+          height={260}
           unoptimized={!!settings?.logo?.asset}
-          className="mx-auto mb-6"
+          className="mx-auto mb-6 w-[130px] md:w-[160px] h-auto"
           priority
         />
         <h1 className="font-display text-5xl md:text-7xl lg:text-[7rem] font-black text-ink leading-[0.9] tracking-tight">

@@ -1,4 +1,5 @@
 import { defineType, defineField } from "sanity";
+import { turkishSlugify } from "../lib/slugify";
 
 export const article = defineType({
   name: "article",
@@ -15,7 +16,13 @@ export const article = defineType({
       name: "slug",
       title: "URL Slug",
       type: "slug",
-      options: { source: "title", maxLength: 96 },
+      options: {
+        source: "title",
+        maxLength: 96,
+        slugify: turkishSlugify,
+      },
+      description:
+        "URL'deki kısım. Başlığa göre otomatik oluşur. Türkçe karakter, boşluk ve noktalama içermez.",
       validation: (r) => r.required(),
     }),
     defineField({

@@ -1,4 +1,5 @@
 import { defineType, defineField } from "sanity";
+import { turkishSlugify } from "../lib/slugify";
 
 export const page = defineType({
   name: "page",
@@ -15,7 +16,7 @@ export const page = defineType({
       name: "slug",
       title: "URL Slug",
       type: "slug",
-      options: { source: "title", maxLength: 96 },
+      options: { source: "title", maxLength: 96, slugify: turkishSlugify },
       validation: (r) => r.required(),
     }),
     defineField({

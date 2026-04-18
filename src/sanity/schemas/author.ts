@@ -1,4 +1,5 @@
 import { defineType, defineField } from "sanity";
+import { turkishSlugify } from "../lib/slugify";
 
 export const author = defineType({
   name: "author",
@@ -15,7 +16,7 @@ export const author = defineType({
       name: "slug",
       title: "URL Slug",
       type: "slug",
-      options: { source: "name", maxLength: 96 },
+      options: { source: "name", maxLength: 96, slugify: turkishSlugify },
       validation: (r) => r.required(),
     }),
     defineField({
