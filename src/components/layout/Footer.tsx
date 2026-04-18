@@ -17,18 +17,13 @@ export default function Footer({
   udemyUrl,
   twitterUrl,
 }: FooterProps) {
-  const socialLinks: { label: string; url?: string }[] = [
+  const visibleLinks: { label: string; url?: string }[] = [
     { label: "Instagram", url: instagramUrl },
     { label: "YouTube", url: youtubeUrl },
     { label: "Pinterest", url: pinterestUrl },
     { label: "Udemy", url: udemyUrl },
-    { label: "Twitter", url: twitterUrl },
+    { label: "X", url: twitterUrl },
   ];
-
-  // Twitter geçici olarak gizli (link verilmezse gösterme)
-  const visibleLinks = socialLinks.filter(
-    (l) => l.label !== "Twitter" || !!l.url
-  );
 
   return (
     <footer className="border-t-2 border-ink mt-auto" role="contentinfo">

@@ -68,8 +68,8 @@ export default async function ToplulukPage() {
           { label: "YouTube", url: settings?.socialLinks?.youtube },
           { label: "Pinterest", url: settings?.socialLinks?.pinterest },
           { label: "Udemy", url: settings?.socialLinks?.udemy },
-          { label: "Twitter", url: settings?.socialLinks?.twitter },
-        ].filter((s) => s.label !== "Twitter" || !!s.url);
+          { label: "X", url: settings?.socialLinks?.twitter },
+        ];
 
         return (
           <section className="mt-16 animate-fade-up stagger-3">

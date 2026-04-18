@@ -31,7 +31,7 @@ export default async function HakkindaPage() {
   ]);
 
   const founderImageUrl = founder?.image?.asset
-    ? urlFor(founder.image).width(400).height(448).url()
+    ? urlFor(founder.image).width(800).height(896).url()
     : "/images/ela-kantarci.jpg";
 
   return (
