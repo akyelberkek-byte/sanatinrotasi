@@ -31,6 +31,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         footerText={settings?.footerText}
         instagramUrl={settings?.socialLinks?.instagram}
         youtubeUrl={settings?.socialLinks?.youtube}
+        pinterestUrl={settings?.socialLinks?.pinterest}
+        udemyUrl={settings?.socialLinks?.udemy}
+        twitterUrl={settings?.socialLinks?.twitter}
       />
     </div>
   );

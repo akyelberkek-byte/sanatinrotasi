@@ -221,6 +221,8 @@ export const siteSettings = defineType({
       fields: [
         defineField({ name: "instagram", title: "Instagram URL", type: "url" }),
         defineField({ name: "youtube", title: "YouTube URL", type: "url" }),
+        defineField({ name: "pinterest", title: "Pinterest URL", type: "url" }),
+        defineField({ name: "udemy", title: "Udemy URL", type: "url" }),
         defineField({ name: "twitter", title: "Twitter/X URL", type: "url" }),
       ],
     }),

@@ -29,7 +29,13 @@ export const SITE_SETTINGS_QUERY = groq`
     newsletterTitleItalic,
     newsletterDescription,
     newsletterNote,
-    socialLinks
+    socialLinks {
+      instagram,
+      youtube,
+      pinterest,
+      udemy,
+      twitter
+    }
   }
 `;
 

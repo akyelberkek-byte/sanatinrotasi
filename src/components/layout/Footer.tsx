@@ -4,44 +4,53 @@ interface FooterProps {
   footerText?: string;
   instagramUrl?: string;
   youtubeUrl?: string;
+  pinterestUrl?: string;
+  udemyUrl?: string;
+  twitterUrl?: string;
 }
 
 export default function Footer({
   footerText = `© ${new Date().getFullYear()} Sanatın Rotası — Tüm hakları saklıdır.`,
-  instagramUrl = "https://instagram.com/sanatinrotasi",
-  youtubeUrl = "https://youtube.com/@sanatinrotasi",
+  instagramUrl,
+  youtubeUrl,
+  pinterestUrl,
+  udemyUrl,
+  twitterUrl,
 }: FooterProps) {
+  const socialLinks: { label: string; url?: string }[] = [
+    { label: "Instagram", url: instagramUrl },
+    { label: "YouTube", url: youtubeUrl },
+    { label: "Pinterest", url: pinterestUrl },
+    { label: "Udemy", url: udemyUrl },
+    { label: "Twitter", url: twitterUrl },
+  ].filter((l) => !!l.url) as { label: string; url: string }[];
+
   return (
     <footer className="border-t-2 border-ink mt-auto" role="contentinfo">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-          <div className="flex gap-6">
-            {instagramUrl && (
+          <div className="flex flex-wrap gap-4 md:gap-6 justify-center">
+            {socialLinks.map((link) => (
               <a
-                href={instagramUrl}
+                key={link.label}
+                href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Instagram (yeni sekmede açılır)"
+                aria-label={`${link.label} (yeni sekmede açılır)`}
                 className="font-sans text-xs uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors link-underline"
               >
-                Instagram
+                {link.label}
               </a>
-            )}
-            {youtubeUrl && (
-              <a
-                href={youtubeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="YouTube (yeni sekmede açılır)"
-                className="font-sans text-xs uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors link-underline"
-              >
-                YouTube
-              </a>
-            )}
+            ))}
           </div>
-          <div className="font-sans text-xs text-warm-gray">{footerText}</div>
+          <div className="font-sans text-xs text-warm-gray text-center md:text-right">
+            {footerText}
+          </div>
         </div>
-        <nav aria-label="Alt sayfa bağlantıları" className="flex justify-center gap-6 pt-4 border-t border-ink/10">
+        <nav
+          aria-label="Alt sayfa bağlantıları"
+          className="flex justify-center gap-6 pt-4 border-t border-ink/10"
+        >
           <Link
             href="/kvkk"
             className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray hover:text-accent transition-colors link-underline"
