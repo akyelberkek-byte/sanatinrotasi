@@ -20,6 +20,11 @@ jobs:
           SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
           SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
         run: |
+          if [ -z "$SANITY_AUTH_TOKEN" ] || [ -z "$SANITY_PROJECT_ID" ]; then
+            echo "::warning::SANITY_AUTH_TOKEN veya SANITY_PROJECT_ID secret'ları henüz eklenmemiş — backup atlandı."
+            echo "Kurulum: GitHub → Settings → Secrets and variables → Actions → New repository secret"
+            exit 0
+          fi
           mkdir -p backups
           DATE=$(date -u +%Y-%m-%d)
           sanity dataset export production "backups/sanity-${DATE}.tar.gz" \

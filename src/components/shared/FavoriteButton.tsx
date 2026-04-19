@@ -15,7 +15,8 @@ export default function FavoriteButton({
 }: Props) {
   const [isFav, setIsFav] = useState(initialIsFavorite);
   const [loading, setLoading] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
+  // Signed-in değilse doğrudan hydrated=true başlat — effect içinde setState yok.
+  const [hydrated, setHydrated] = useState(!isSignedIn);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -25,12 +26,9 @@ export default function FavoriteButton({
     };
   }, []);
 
-  // Client mount sonrası favorileri bir kez çek (server-side cache sorununu engellemek için)
+  // Client mount sonrası favorileri bir kez çek (sadece signed-in'de)
   useEffect(() => {
-    if (!isSignedIn) {
-      setHydrated(true);
-      return;
-    }
+    if (!isSignedIn) return;
     fetch("/api/favorites")
       .then((r) => (r.ok ? r.json() : { favorites: [] }))
       .then((d: { favorites?: string[] }) => {
