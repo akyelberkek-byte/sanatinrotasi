@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { writeClient } from "@/sanity/writeClient";
 import { revalidatePath } from "next/cache";
+import { commentPostLimiter } from "@/lib/rateLimit";
 
 /**
  * POST /api/comments
@@ -15,6 +16,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Yorum yapmak için giriş yapmalısın." },
         { status: 401 }
+      );
+    }
+
+    // Rate limit: 5 yorum / dakika (kullanıcı bazlı — çok yorum spam'ı önler)
+    const limit = commentPostLimiter.check(`comment-post:${userId}`);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: "Çok sık yorum gönderiyorsun, biraz bekle." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil(limit.resetMs / 1000)) },
+        }
       );
     }
 

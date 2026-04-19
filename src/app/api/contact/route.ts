@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { writeClient } from "@/sanity/writeClient";
+import { contactLimiter, getClientIp } from "@/lib/rateLimit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -50,6 +51,23 @@ async function uploadToSanity(file: File): Promise<UploadedAsset> {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 istek / 10 dakika (IP bazlı)
+    const ip = getClientIp(request);
+    const limit = contactLimiter.check(`contact:${ip}`);
+    if (!limit.success) {
+      return NextResponse.json(
+        {
+          error: `Çok fazla istek. Lütfen ${Math.ceil(limit.resetMs / 60_000)} dakika sonra tekrar deneyin.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.ceil(limit.resetMs / 1000)),
+          },
+        }
+      );
+    }
+
     const contentType = request.headers.get("content-type") || "";
 
     let name = "";
@@ -86,11 +104,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!email.includes("@")) {
+    // Email validation (safe regex, no catastrophic backtracking)
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!EMAIL_REGEX.test(email) || email.length > 254) {
       return NextResponse.json(
         { error: "Geçerli bir e-posta adresi gir." },
         { status: 400 }
       );
+    }
+
+    // Length limits (frontend bypass-proof)
+    if (name.length > 200 || subject.length > 500 || message.length > 5000) {
+      return NextResponse.json(
+        { error: "Alan uzunluğu sınırı aşıldı." },
+        { status: 400 }
+      );
+    }
+
+    // External link validation (only http/https)
+    if (externalLink) {
+      if (externalLink.length > 500) {
+        return NextResponse.json(
+          { error: "Link çok uzun." },
+          { status: 400 }
+        );
+      }
+      try {
+        const url = new URL(externalLink);
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+          throw new Error("invalid protocol");
+        }
+      } catch {
+        return NextResponse.json(
+          { error: "Geçerli bir URL gir (https:// ile başlamalı)." },
+          { status: 400 }
+        );
+      }
     }
 
     // Boyut kontrolü
@@ -100,6 +149,18 @@ export async function POST(request: NextRequest) {
         { error: "Dosyaların toplam boyutu 4 MB'ı aşıyor. Daha büyük dosyalar için mesaja WeTransfer/Drive linki ekleyin." },
         { status: 400 }
       );
+    }
+
+    // MIME type whitelist (server-side, bypass-proof)
+    const ALLOWED_MIME_PREFIXES = ["image/", "video/", "audio/"];
+    for (const file of attachmentFiles) {
+      const mime = file.type || "";
+      if (!ALLOWED_MIME_PREFIXES.some((p) => mime.startsWith(p))) {
+        return NextResponse.json(
+          { error: `Desteklenmeyen dosya türü: ${file.name}` },
+          { status: 400 }
+        );
+      }
     }
 
     // Dosyaları Sanity'ye yükle (varsa)

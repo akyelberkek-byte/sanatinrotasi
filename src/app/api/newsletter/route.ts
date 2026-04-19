@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { newsletterLimiter, getClientIp } from "@/lib/rateLimit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -16,6 +17,19 @@ function escapeHtml(str: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 istek / 10 dk
+    const ip = getClientIp(request);
+    const limit = newsletterLimiter.check(`newsletter:${ip}`);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: "Çok fazla istek. Biraz sonra tekrar deneyin." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil(limit.resetMs / 1000)) },
+        }
+      );
+    }
+
     const body = await request.json();
     const { email } = body as { email: unknown };
 
