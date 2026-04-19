@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Playfair_Display, Cormorant_Garamond, Libre_Franklin } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { trTR } from "@clerk/localizations";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const hasClerkKeys = !!(
@@ -88,6 +90,8 @@ export default function RootLayout({
         ) : (
           children
         )}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

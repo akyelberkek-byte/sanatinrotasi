@@ -57,6 +57,21 @@ export const comment = defineType({
       readOnly: true,
       initialValue: () => new Date().toISOString(),
     }),
+    defineField({
+      name: "likeCount",
+      title: "Beğeni Sayısı",
+      type: "number",
+      readOnly: true,
+      initialValue: 0,
+    }),
+    defineField({
+      name: "likedBy",
+      title: "Beğenenler (Clerk userId)",
+      type: "array",
+      of: [{ type: "string" }],
+      readOnly: true,
+      hidden: true,
+    }),
   ],
   preview: {
     select: {

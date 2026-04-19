@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { writeClient } from "@/sanity/writeClient";
 import { contactLimiter, getClientIp } from "@/lib/rateLimit";
+import { captureError } from "@/lib/observability";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit: 5 istek / 10 dakika (IP bazlı)
     const ip = getClientIp(request);
-    const limit = contactLimiter.check(`contact:${ip}`);
+    const limit = await contactLimiter.check(`contact:${ip}`);
     if (!limit.success) {
       return NextResponse.json(
         {
@@ -229,7 +230,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, uploaded: uploaded.length });
   } catch (error) {
-    console.error("Contact form error:", error);
+    captureError(error, { route: "/api/contact" });
     return NextResponse.json({ error: "Sunucu hatası" }, { status: 500 });
   }
 }

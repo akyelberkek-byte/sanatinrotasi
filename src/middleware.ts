@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Korunan rotalar — sadece giriş yapan kullanıcılar
-const isProtectedRoute = createRouteMatcher(["/profil(.*)"]);
+const isProtectedRoute = createRouteMatcher([
+  "/profil(.*)",
+  "/yonetim(.*)",
+  "/kaydettiklerim(.*)",
+]);
 
 // Clerk API key'leri yoksa middleware'ı atla
 const hasClerkKeys =

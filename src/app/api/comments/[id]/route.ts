@@ -37,7 +37,7 @@ export async function DELETE(
     }
 
     // Rate limit: admin hesabı ele geçse bile toplu silme yapamasın
-    const limit = commentDeleteLimiter.check(`comment-del:${userId}`);
+    const limit = await commentDeleteLimiter.check(`comment-del:${userId}`);
     if (!limit.success) {
       return NextResponse.json(
         { error: "Çok sık istek, biraz bekle." },

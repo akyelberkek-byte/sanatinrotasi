@@ -35,6 +35,16 @@ export const SITE_SETTINGS_QUERY = groq`
     newsletterTitleItalic,
     newsletterDescription,
     newsletterNote,
+    commentsRequireApproval,
+    roportajlarHeading,
+    roportajlarHeadingItalic,
+    roportajlarDescription,
+    toplulukHeading,
+    toplulukHeadingItalic,
+    toplulukDescription,
+    emptyArticlesText,
+    emptyEventsText,
+    emptyRoutesText,
     socialLinks {
       instagram,
       youtube,
@@ -96,6 +106,7 @@ export const ALL_ARTICLE_SLUGS_QUERY = groq`
 export const ARTICLE_BY_SLUG_QUERY = groq`
   *[_type == "article" && slug.current == $slug][0] {
     _id,
+    _updatedAt,
     title,
     slug,
     publishedAt,
@@ -116,12 +127,27 @@ export const ARTICLE_BY_SLUG_QUERY = groq`
       ogImage
     },
     author-> { name, slug, image, role, bio, social },
-    category-> { title, slug, color }
+    category-> { _id, title, slug, color }
   }
 `;
 
 export const ARTICLES_BY_CATEGORY_QUERY = groq`
   *[_type == "article" && category->slug.current == $categorySlug] | order(publishedAt desc) {
+    _id,
+    title,
+    slug,
+    publishedAt,
+    excerpt,
+    mainImage,
+    author-> { name, slug },
+    category-> { title, slug, color }
+  }
+`;
+
+// İlgili yazılar: aynı kategorideki, mevcut yazı hariç, en yeni 3 yazı
+export const RELATED_ARTICLES_QUERY = groq`
+  *[_type == "article" && category._ref == $categoryId && _id != $articleId]
+    | order(publishedAt desc, _createdAt desc) [0...3] {
     _id,
     title,
     slug,
@@ -219,6 +245,20 @@ export const ROUTE_BY_SLUG_QUERY = groq`
   }
 `;
 
+// Favorilerdeki yazılar (ID listesiyle) — profil sayfası için
+export const ARTICLES_BY_IDS_QUERY = groq`
+  *[_type == "article" && _id in $ids] {
+    _id,
+    title,
+    slug,
+    publishedAt,
+    excerpt,
+    mainImage,
+    author-> { name, slug },
+    category-> { title, slug, color }
+  }
+`;
+
 // Authors
 export const AUTHOR_BY_SLUG_QUERY = groq`
   *[_type == "author" && slug.current == $slug][0] {
@@ -242,7 +282,9 @@ export const COMMENTS_BY_ARTICLE_QUERY = groq`
     authorName,
     authorImage,
     body,
-    createdAt
+    createdAt,
+    "likeCount": coalesce(likeCount, 0),
+    "likedBy": coalesce(likedBy, [])
   }
 `;
 

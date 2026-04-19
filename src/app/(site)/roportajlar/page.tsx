@@ -1,5 +1,9 @@
 import { client } from "@/sanity/client";
-import { ARTICLES_BY_CATEGORY_QUERY, CATEGORIES_QUERY } from "@/sanity/queries";
+import {
+  ARTICLES_BY_CATEGORY_QUERY,
+  CATEGORIES_QUERY,
+  SITE_SETTINGS_QUERY,
+} from "@/sanity/queries";
 import ArticleCard from "@/components/shared/ArticleCard";
 import SectionLabel from "@/components/shared/SectionLabel";
 import Link from "next/link";
@@ -14,22 +18,27 @@ export const metadata: Metadata = {
 };
 
 export default async function RoportajlarPage() {
-  const [articles, categories] = await Promise.all([
+  const [articles, categories, settings] = await Promise.all([
     client.fetch(ARTICLES_BY_CATEGORY_QUERY, { categorySlug: "roportajlar" }),
     client.fetch(CATEGORIES_QUERY),
+    client.fetch(SITE_SETTINGS_QUERY).catch(() => null),
   ]);
+
+  const heading = settings?.roportajlarHeading || "Sanatın";
+  const headingItalic = settings?.roportajlarHeadingItalic || "Sesleri";
+  const description =
+    settings?.roportajlarDescription ||
+    "Sanatçılarla, küratörlerle ve sanat dünyasının farklı isimleriyle yapılan derinlikli röportajlar. Perde arkasındaki hikâyeler, üretim süreçleri ve sanatçı bakışları.";
 
   return (
     <div className="max-w-7xl mx-auto px-6 md:px-12 py-12">
       <header className="mb-10 animate-fade-up">
         <SectionLabel label="Röportajlar" className="mb-3 block" />
         <h1 className="font-display text-4xl md:text-5xl font-bold text-ink">
-          Sanatın <span className="italic text-accent">Sesleri</span>
+          {heading} <span className="italic text-accent">{headingItalic}</span>
         </h1>
         <p className="font-serif text-lg text-soft-black/70 mt-3 max-w-2xl">
-          Sanatçılarla, küratörlerle ve sanat dünyasının farklı isimleriyle
-          yapılan derinlikli röportajlar. Perde arkasındaki hikâyeler, üretim
-          süreçleri ve sanatçı bakışları.
+          {description}
         </p>
       </header>
 
@@ -67,7 +76,8 @@ export default async function RoportajlarPage() {
       ) : (
         <div className="text-center py-20">
           <p className="font-serif text-xl text-warm-gray italic">
-            Henüz yayınlanmış röportaj bulunmuyor.
+            {settings?.emptyArticlesText?.replace("yazı", "röportaj") ||
+              "Henüz yayınlanmış röportaj bulunmuyor."}
           </p>
           <p className="font-sans text-sm text-warm-gray mt-2">
             İlk röportajlar çok yakında burada olacak.

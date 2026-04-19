@@ -10,6 +10,8 @@ type Comment = {
   authorImage?: string;
   body: string;
   createdAt: string;
+  likeCount?: number;
+  likedBy?: string[];
 };
 
 interface CommentsSectionProps {
@@ -47,7 +49,7 @@ export default function CommentsSection({
 }: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [text, setText] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "error" | "pending">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -73,12 +75,71 @@ export default function CommentsSection({
         return;
       }
 
-      setComments((prev) => [...prev, data.comment]);
-      setText("");
-      setStatus("idle");
+      // Onay gerekiyorsa yorum listesine eklenmez; kullanıcıya pending bildirilir.
+      if (data.pending) {
+        setText("");
+        setStatus("pending");
+      } else {
+        setComments((prev) => [...prev, data.comment]);
+        setText("");
+        setStatus("idle");
+      }
     } catch {
       setStatus("error");
       setErrorMsg("Bir hata oluştu, tekrar deneyin.");
+    }
+  }
+
+  async function handleLike(id: string) {
+    if (!currentUser) return;
+    // Optimistic UI update — API geldiğinde geri düzeltilir
+    setComments((prev) =>
+      prev.map((c) => {
+        if (c._id !== id) return c;
+        const has = c.likedBy?.includes(currentUser.id);
+        const nextLikedBy = has
+          ? (c.likedBy || []).filter((u) => u !== currentUser.id)
+          : [...(c.likedBy || []), currentUser.id];
+        return { ...c, likedBy: nextLikedBy, likeCount: nextLikedBy.length };
+      })
+    );
+
+    try {
+      const res = await fetch(`/api/comments/${id}/like`, { method: "POST" });
+      if (!res.ok) {
+        // Başarısız → geri al
+        setComments((prev) =>
+          prev.map((c) => {
+            if (c._id !== id) return c;
+            const has = c.likedBy?.includes(currentUser.id);
+            const revertedLikedBy = has
+              ? (c.likedBy || []).filter((u) => u !== currentUser.id)
+              : [...(c.likedBy || []), currentUser.id];
+            return {
+              ...c,
+              likedBy: revertedLikedBy,
+              likeCount: revertedLikedBy.length,
+            };
+          })
+        );
+      } else {
+        const data = await res.json();
+        setComments((prev) =>
+          prev.map((c) =>
+            c._id === id
+              ? {
+                  ...c,
+                  likeCount: data.count,
+                  likedBy: data.liked
+                    ? [...(c.likedBy || []).filter((u) => u !== currentUser.id), currentUser.id]
+                    : (c.likedBy || []).filter((u) => u !== currentUser.id),
+                }
+              : c
+          )
+        );
+      }
+    } catch {
+      // Network hatası — sessizce ignore, UI zaten optimistic
     }
   }
 
@@ -167,6 +228,11 @@ export default function CommentsSection({
               {errorMsg}
             </p>
           )}
+          {status === "pending" && (
+            <p className="font-sans text-xs text-accent mt-2" role="status">
+              Yorumun alındı, onaylandığında burada görünecek.
+            </p>
+          )}
         </form>
       ) : (
         <div className="mb-10 p-6 border-2 border-ink/10 bg-paper/30 text-center">
@@ -237,6 +303,31 @@ export default function CommentsSection({
                 <p className="font-serif text-base text-soft-black mt-2 whitespace-pre-line break-words">
                   {c.body}
                 </p>
+                <div className="mt-2">
+                  {currentUser ? (
+                    <button
+                      onClick={() => handleLike(c._id)}
+                      className="font-sans text-[0.65rem] uppercase tracking-[0.15em] text-warm-gray hover:text-accent transition-colors inline-flex items-center gap-1.5"
+                      aria-label={
+                        c.likedBy?.includes(currentUser.id)
+                          ? "Beğeniyi kaldır"
+                          : "Beğen"
+                      }
+                    >
+                      <span className={c.likedBy?.includes(currentUser.id) ? "text-accent" : ""}>
+                        {c.likedBy?.includes(currentUser.id) ? "♥" : "♡"}
+                      </span>
+                      <span>{c.likeCount && c.likeCount > 0 ? c.likeCount : "Beğen"}</span>
+                    </button>
+                  ) : (
+                    (c.likeCount ?? 0) > 0 && (
+                      <span className="font-sans text-[0.65rem] uppercase tracking-[0.15em] text-warm-gray inline-flex items-center gap-1.5">
+                        <span>♥</span>
+                        <span>{c.likeCount}</span>
+                      </span>
+                    )
+                  )}
+                </div>
               </div>
             </li>
           ))}

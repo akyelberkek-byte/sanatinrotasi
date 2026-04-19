@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { newsletterLimiter, getClientIp } from "@/lib/rateLimit";
+import { captureError } from "@/lib/observability";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit: 5 istek / 10 dk
     const ip = getClientIp(request);
-    const limit = newsletterLimiter.check(`newsletter:${ip}`);
+    const limit = await newsletterLimiter.check(`newsletter:${ip}`);
     if (!limit.success) {
       return NextResponse.json(
         { error: "Çok fazla istek. Biraz sonra tekrar deneyin." },
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Newsletter error:", error);
+    captureError(error, { route: "/api/newsletter" });
     return NextResponse.json({ error: "Sunucu hatası" }, { status: 500 });
   }
 }

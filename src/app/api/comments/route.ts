@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { writeClient } from "@/sanity/writeClient";
+import { client } from "@/sanity/client";
 import { revalidatePath } from "next/cache";
 import { commentPostLimiter } from "@/lib/rateLimit";
+import { captureError } from "@/lib/observability";
+import { groq } from "next-sanity";
 
 export const runtime = "nodejs";
 
@@ -25,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit: 5 yorum / dakika (kullanıcı bazlı — çok yorum spam'ı önler)
-    const limit = commentPostLimiter.check(`comment-post:${userId}`);
+    const limit = await commentPostLimiter.check(`comment-post:${userId}`);
     if (!limit.success) {
       return NextResponse.json(
         { error: "Çok sık yorum gönderiyorsun, biraz bekle." },
@@ -72,6 +75,17 @@ export async function POST(request: NextRequest) {
       "Anonim";
     const authorEmail = user.emailAddresses?.[0]?.emailAddress || "";
 
+    // Site ayarı: yorum moderasyonu açık mı? (Sanity'den toggle)
+    // Açıksa yorumlar onay bekler, kapalıysa otomatik yayımlanır.
+    const settings = await client
+      .fetch<{ commentsRequireApproval?: boolean } | null>(
+        groq`*[_type == "siteSettings"][0]{ commentsRequireApproval }`,
+        {},
+        { next: { revalidate: 30 } },
+      )
+      .catch(() => null);
+    const approved = !settings?.commentsRequireApproval;
+
     const doc = await writeClient.create({
       _type: "comment",
       article: { _type: "reference", _ref: articleId },
@@ -80,7 +94,7 @@ export async function POST(request: NextRequest) {
       authorId: userId,
       authorImage: user.imageUrl || "",
       body: trimmed,
-      approved: true,
+      approved,
       createdAt: new Date().toISOString(),
     });
 
@@ -95,6 +109,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      pending: !approved,
       comment: {
         _id: doc._id,
         authorName: doc.authorName,
@@ -104,7 +119,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Comment POST error:", error);
+    captureError(error, { route: "/api/comments" });
     return NextResponse.json({ error: "Sunucu hatası" }, { status: 500 });
   }
 }

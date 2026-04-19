@@ -57,8 +57,14 @@ export default function Footer({
         </div>
         <nav
           aria-label="Alt sayfa bağlantıları"
-          className="flex justify-center gap-6 pt-4 border-t border-ink/10"
+          className="flex flex-wrap justify-center gap-6 pt-4 border-t border-ink/10"
         >
+          <Link
+            href="/ara"
+            className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray hover:text-accent transition-colors link-underline"
+          >
+            Ara
+          </Link>
           <Link
             href="/kvkk"
             className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray hover:text-accent transition-colors link-underline"

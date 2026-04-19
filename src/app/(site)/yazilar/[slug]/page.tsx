@@ -1,7 +1,8 @@
 import { findArticleBySlug } from "@/sanity/lib/findArticle";
 import { urlFor } from "@/sanity/image";
 import { client } from "@/sanity/client";
-import { COMMENTS_BY_ARTICLE_QUERY } from "@/sanity/queries";
+import { COMMENTS_BY_ARTICLE_QUERY, RELATED_ARTICLES_QUERY } from "@/sanity/queries";
+import ArticleCard from "@/components/shared/ArticleCard";
 import { isAdminEmail } from "@/lib/admin";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,7 +10,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import PortableRenderer from "@/components/shared/PortableRenderer";
 import CommentsSection from "@/components/shared/CommentsSection";
+import FavoriteButton from "@/components/shared/FavoriteButton";
 import { currentUser } from "@clerk/nextjs/server";
+import { readingTimeMinutes } from "@/lib/readingTime";
 
 export const revalidate = 60;
 
@@ -31,11 +34,23 @@ export default async function ArticlePage({ params }: Props) {
 
   if (!article) notFound();
 
-  // Fetch comments for this article (in parallel with Clerk user lookup)
-  const [comments, user] = await Promise.all([
+  // Fetch comments + related articles + current user in parallel
+  const [comments, relatedArticles, user] = await Promise.all([
     client
       .fetch(COMMENTS_BY_ARTICLE_QUERY, { articleId: article._id })
       .catch(() => []),
+    article.category?._id || article.category?.slug
+      ? client
+          .fetch(
+            RELATED_ARTICLES_QUERY,
+            {
+              categoryId: article.category._id,
+              articleId: article._id,
+            },
+            { next: { revalidate: 300 } },
+          )
+          .catch(() => [])
+      : Promise.resolve([]),
     currentUser().catch(() => null),
   ]);
 
@@ -59,6 +74,8 @@ export default async function ArticlePage({ params }: Props) {
         day: "numeric",
       })
     : "";
+
+  const readMinutes = readingTimeMinutes(article.body);
 
   return (
     <article className="max-w-4xl mx-auto px-6 md:px-12 py-12">
@@ -102,6 +119,14 @@ export default async function ArticlePage({ params }: Props) {
               <span>{date}</span>
             </>
           )}
+          <span>·</span>
+          <span>{readMinutes} dk okuma</span>
+          <span className="ml-auto">
+            <FavoriteButton
+              articleId={article._id}
+              isSignedIn={!!user}
+            />
+          </span>
         </div>
       </header>
 
@@ -172,6 +197,20 @@ export default async function ArticlePage({ params }: Props) {
         </div>
       )}
 
+      {/* Related articles */}
+      {Array.isArray(relatedArticles) && relatedArticles.length > 0 && (
+        <section className="mt-16 pt-10 border-t-2 border-ink">
+          <h2 className="font-display text-xl md:text-2xl font-bold text-ink mb-6">
+            İlgili Yazılar
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {relatedArticles.map((r: any) => (
+              <ArticleCard key={r._id} article={r} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Comments */}
       <CommentsSection
         articleId={article._id}
@@ -179,6 +218,39 @@ export default async function ArticlePage({ params }: Props) {
         initialComments={comments || []}
         currentUser={currentUserInfo}
         isAdmin={isAdmin}
+      />
+
+      {/* Schema.org JSON-LD — Google için yapısal veri */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: article.title,
+            description: article.excerpt || article.seo?.metaDescription,
+            datePublished: article.publishedAt,
+            dateModified: article._updatedAt || article.publishedAt,
+            author: article.author?.name
+              ? { "@type": "Person", name: article.author.name }
+              : undefined,
+            publisher: {
+              "@type": "Organization",
+              name: "Sanatın Rotası",
+              url: "https://sanatinrotasi.com",
+            },
+            image: article.mainImage?.asset
+              ? urlFor(article.mainImage).width(1200).height(630).url()
+              : undefined,
+            mainEntityOfPage: {
+              "@type": "WebPage",
+              "@id": `https://sanatinrotasi.com/yazilar/${article.slug.current}`,
+            },
+            articleSection: article.category?.title,
+            keywords: article.tags?.join(", "),
+            wordCount: undefined,
+          }),
+        }}
       />
     </article>
   );

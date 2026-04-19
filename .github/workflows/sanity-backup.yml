@@ -1,0 +1,33 @@
+name: Sanity Backup
+
+on:
+  schedule:
+    - cron: "0 4 * * 0" # Her pazar 04:00 UTC (~07:00 TR)
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Sanity CLI
+        run: npm install -g sanity@latest
+      - name: Export dataset
+        env:
+          SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+          SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+        run: |
+          mkdir -p backups
+          DATE=$(date -u +%Y-%m-%d)
+          sanity dataset export production "backups/sanity-${DATE}.tar.gz" \
+            --project "$SANITY_PROJECT_ID" \
+            --no-drafts=false
+      - name: Upload backup artifact (30 gün saklanır)
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanity-backup-${{ github.run_id }}
+          path: backups/
+          retention-days: 30

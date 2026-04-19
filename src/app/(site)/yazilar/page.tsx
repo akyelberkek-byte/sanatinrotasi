@@ -1,5 +1,5 @@
 import { client } from "@/sanity/client";
-import { ARTICLES_QUERY, CATEGORIES_QUERY } from "@/sanity/queries";
+import { ARTICLES_QUERY, CATEGORIES_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/queries";
 import ArticleCard from "@/components/shared/ArticleCard";
 import SectionLabel from "@/components/shared/SectionLabel";
 import Link from "next/link";
@@ -13,10 +13,13 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function YazilarPage() {
-  const [articles, categories] = await Promise.all([
+  const [articles, categories, settings] = await Promise.all([
     client.fetch(ARTICLES_QUERY, { limit: 50 }),
     client.fetch(CATEGORIES_QUERY),
+    client.fetch(SITE_SETTINGS_QUERY).catch(() => null),
   ]);
+  const emptyText =
+    settings?.emptyArticlesText || "Henüz yayınlanmış yazı bulunmuyor.";
 
   return (
     <div className="max-w-7xl mx-auto px-6 md:px-12 py-12">
@@ -62,7 +65,7 @@ export default async function YazilarPage() {
       ) : (
         <div className="text-center py-20">
           <p className="font-serif text-xl text-warm-gray italic">
-            Henüz yayınlanmış yazı bulunmuyor.
+            {emptyText}
           </p>
           <p className="font-sans text-sm text-warm-gray mt-2">
             İlk yazılar çok yakında burada olacak.

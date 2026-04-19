@@ -13,6 +13,9 @@ export const siteSettings = defineType({
     { name: "sections", title: "Bölüm Başlıkları" },
     { name: "newsletter", title: "Bülten" },
     { name: "social", title: "Sosyal Medya" },
+    { name: "moderation", title: "Moderasyon" },
+    { name: "pages", title: "Sayfa Başlıkları" },
+    { name: "empty", title: "Boş Durum Metinleri" },
   ],
   fields: [
     // GENEL
@@ -258,6 +261,79 @@ export const siteSettings = defineType({
       type: "string",
       group: "newsletter",
       initialValue: "Sadece sanat. Asla spam değil.",
+    }),
+
+    // SAYFA BAŞLIKLARI (Röportajlar + Topluluk)
+    defineField({
+      name: "roportajlarHeading",
+      title: "Röportajlar — Başlık (1. kelime)",
+      type: "string",
+      group: "pages",
+      description: "Örn: 'Sanatın' — italik kelimeden önce gelir",
+    }),
+    defineField({
+      name: "roportajlarHeadingItalic",
+      title: "Röportajlar — Başlık (İtalik)",
+      type: "string",
+      group: "pages",
+      description: "Örn: 'Sesleri'",
+    }),
+    defineField({
+      name: "roportajlarDescription",
+      title: "Röportajlar — Açıklama",
+      type: "text",
+      rows: 3,
+      group: "pages",
+    }),
+    defineField({
+      name: "toplulukHeading",
+      title: "Topluluk — Başlık (1. kelime)",
+      type: "string",
+      group: "pages",
+    }),
+    defineField({
+      name: "toplulukHeadingItalic",
+      title: "Topluluk — Başlık (İtalik)",
+      type: "string",
+      group: "pages",
+    }),
+    defineField({
+      name: "toplulukDescription",
+      title: "Topluluk — Açıklama",
+      type: "text",
+      rows: 3,
+      group: "pages",
+    }),
+
+    // BOŞ DURUM METİNLERİ
+    defineField({
+      name: "emptyArticlesText",
+      title: "Yazı Yoksa Gösterilecek Metin",
+      type: "string",
+      group: "empty",
+    }),
+    defineField({
+      name: "emptyEventsText",
+      title: "Etkinlik Yoksa Gösterilecek Metin",
+      type: "string",
+      group: "empty",
+    }),
+    defineField({
+      name: "emptyRoutesText",
+      title: "Rota Yoksa Gösterilecek Metin",
+      type: "string",
+      group: "empty",
+    }),
+
+    // MODERASYON
+    defineField({
+      name: "commentsRequireApproval",
+      title: "Yorumlar Onay Gerektirsin",
+      type: "boolean",
+      description:
+        "Açıksa: Gelen yorumlar sen onaylayana kadar sitede görünmez. Kapalıysa: Otomatik yayımlanır.",
+      initialValue: false,
+      group: "moderation",
     }),
 
     // SOSYAL MEDYA

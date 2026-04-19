@@ -1,5 +1,5 @@
 import { client } from "@/sanity/client";
-import { ROUTES_QUERY } from "@/sanity/queries";
+import { ROUTES_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/queries";
 import RouteCard from "@/components/shared/RouteCard";
 import SectionLabel from "@/components/shared/SectionLabel";
 import type { Metadata } from "next";
@@ -12,7 +12,12 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function RotalarPage() {
-  const routes = await client.fetch(ROUTES_QUERY);
+  const [routes, settings] = await Promise.all([
+    client.fetch(ROUTES_QUERY),
+    client.fetch(SITE_SETTINGS_QUERY).catch(() => null),
+  ]);
+  const emptyText =
+    settings?.emptyRoutesText || "Henüz yayınlanmış rota bulunmuyor.";
 
   return (
     <div className="max-w-7xl mx-auto px-6 md:px-12 py-12">
@@ -36,7 +41,7 @@ export default async function RotalarPage() {
       ) : (
         <div className="text-center py-20">
           <p className="font-serif text-xl text-warm-gray italic">
-            Henüz yayınlanmış rota bulunmuyor.
+            {emptyText}
           </p>
           <p className="font-sans text-sm text-warm-gray mt-2">
             İlk sanat rotaları çok yakında burada olacak.
