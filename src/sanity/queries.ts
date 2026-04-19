@@ -273,11 +273,10 @@ export const AUTHOR_BY_SLUG_QUERY = groq`
 `;
 
 // Comments — per article
-// Limit 200 — prevents OOM / slow render on articles with spam or huge comment threads.
-// UI zaten uzun thread'lerde load-more pattern'ini gerektirir; 200 makul bir üst sınır.
+// Limit 100 — SSR timeout/OOM koruması. Pagination UI eklenene kadar makul üst sınır.
 export const COMMENTS_BY_ARTICLE_QUERY = groq`
   *[_type == "comment" && article._ref == $articleId && approved == true]
-    | order(createdAt asc) [0...200] {
+    | order(createdAt asc) [0...100] {
     _id,
     authorName,
     authorImage,

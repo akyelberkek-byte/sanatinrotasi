@@ -47,6 +47,15 @@ export default function SearchClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (abortRef.current) abortRef.current.abort();
+    };
+  }, []);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -56,9 +65,7 @@ export default function SearchClient() {
       return;
     }
 
-    // Debounce
     const timer = setTimeout(() => {
-      // Önceki isteği iptal
       if (abortRef.current) abortRef.current.abort();
       const controller = new AbortController();
       abortRef.current = controller;
@@ -71,11 +78,13 @@ export default function SearchClient() {
       })
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error("req"))))
         .then((data: Results) => {
+          if (!mountedRef.current) return;
           setResults(data);
           setLoading(false);
         })
         .catch((e: unknown) => {
           if (e instanceof Error && e.name === "AbortError") return;
+          if (!mountedRef.current) return;
           setError("Arama sırasında bir sorun oluştu.");
           setLoading(false);
         });

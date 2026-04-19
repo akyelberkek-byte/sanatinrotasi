@@ -50,8 +50,9 @@ export default async function AdminDashboardPage() {
     redirect("/");
   }
 
+  // 60s cache — admin paneli count/aggregation'ları Sanity quota'ya yüklenmesin
   const data = await client
-    .fetch(ADMIN_DASHBOARD_QUERY, {}, { next: { revalidate: 0 } })
+    .fetch(ADMIN_DASHBOARD_QUERY, {}, { next: { revalidate: 60 } })
     .catch(() => null);
 
   const fmtDate = (iso?: string) =>

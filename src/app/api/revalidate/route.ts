@@ -40,10 +40,19 @@ type Body = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { isValidSignature, body } = await parseBody<Body>(
-      request,
-      process.env.SANITY_WEBHOOK_SECRET,
-    );
+    const secret = process.env.SANITY_WEBHOOK_SECRET;
+    if (!secret) {
+      // Secret yapılandırılmamışsa webhook'u hiç açmayalım — forged request riski
+      captureError(new Error("SANITY_WEBHOOK_SECRET not configured"), {
+        route: "/api/revalidate",
+      });
+      return NextResponse.json(
+        { error: "Webhook not configured" },
+        { status: 503 }
+      );
+    }
+
+    const { isValidSignature, body } = await parseBody<Body>(request, secret);
 
     if (!isValidSignature) {
       return NextResponse.json(

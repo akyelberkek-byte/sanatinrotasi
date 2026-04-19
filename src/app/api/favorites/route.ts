@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { createRateLimiter } from "@/lib/rateLimit";
+import { captureError } from "@/lib/observability";
 
 export const runtime = "nodejs";
 
 const SANITY_ID_REGEX = /^[a-zA-Z0-9._-]{1,64}$/;
-const MAX_FAVORITES = 500;
+// Clerk publicMetadata 8KB limit: ID'ler ~30-40 byte, güvenli marj için 150 üst sınır
+const MAX_FAVORITES = 150;
+
+const favoritesLimiter = createRateLimiter(
+  { interval: 60_000, tokensPerInterval: 30, uniqueTokenPerInterval: 500 },
+  "fav"
+);
 
 async function getFavorites(userId: string): Promise<string[]> {
   const clerk = await clerkClient();
@@ -35,7 +43,7 @@ export async function GET() {
     const favorites = await getFavorites(userId);
     return NextResponse.json({ favorites });
   } catch (error) {
-    console.error("Favorites GET error:", error);
+    captureError(error, { route: "/api/favorites", method: "GET" });
     return NextResponse.json({ favorites: [] });
   }
 }
@@ -49,6 +57,15 @@ export async function POST(request: NextRequest) {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Giriş yapmalısın" }, { status: 401 });
+    }
+
+    // Rate limit: spam / Clerk quota koruması
+    const limit = await favoritesLimiter.check(`fav:${userId}`);
+    if (!limit.success) {
+      return NextResponse.json(
+        { error: "Çok hızlı, biraz bekle" },
+        { status: 429 }
+      );
     }
 
     const { articleId, action } = await request.json();
@@ -80,7 +97,7 @@ export async function POST(request: NextRequest) {
     await setFavorites(userId, next);
     return NextResponse.json({ favorites: next });
   } catch (error) {
-    console.error("Favorites POST error:", error);
+    captureError(error, { route: "/api/favorites", method: "POST" });
     return NextResponse.json({ error: "Sunucu hatası" }, { status: 500 });
   }
 }

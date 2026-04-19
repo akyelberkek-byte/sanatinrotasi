@@ -6,14 +6,17 @@ import { searchLimiter, getClientIp } from "@/lib/rateLimit";
 export const runtime = "nodejs";
 export const revalidate = 60;
 
-// GROQ escape — kullanıcı input'u doğrudan GROQ'a konulmaz.
-// match operatörü "*" ve "?" wildcard'ları destekler; onları literal yap.
+// GROQ injection ve match operator manipulation koruması.
+// $term parameterized; ek olarak wildcard/logical karakterlerini literal yapıyoruz.
 function sanitizeQuery(q: string): string {
   return q
-    .replace(/[*?]/g, " ")
-    .replace(/["\\]/g, "")
+    .replace(/[*?]/g, " ") // GROQ match wildcard
+    .replace(/["\\]/g, "") // string delimiter
+    .replace(/[()[\]{}]/g, " ") // grup/paren
+    .replace(/[&|!]/g, " ") // logical operatörler
+    .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 100);
+    .slice(0, 80);
 }
 
 const SEARCH_QUERY = groq`{

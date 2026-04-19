@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   articleId: string;
@@ -16,6 +16,14 @@ export default function FavoriteButton({
   const [isFav, setIsFav] = useState(initialIsFavorite);
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   // Client mount sonrası favorileri bir kez çek (server-side cache sorununu engellemek için)
   useEffect(() => {
@@ -26,10 +34,13 @@ export default function FavoriteButton({
     fetch("/api/favorites")
       .then((r) => (r.ok ? r.json() : { favorites: [] }))
       .then((d: { favorites?: string[] }) => {
+        if (!mountedRef.current) return;
         setIsFav((d.favorites || []).includes(articleId));
         setHydrated(true);
       })
-      .catch(() => setHydrated(true));
+      .catch(() => {
+        if (mountedRef.current) setHydrated(true);
+      });
   }, [articleId, isSignedIn]);
 
   async function toggle() {
