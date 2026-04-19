@@ -4,9 +4,14 @@ import { writeClient } from "@/sanity/writeClient";
 import { revalidatePath } from "next/cache";
 import { commentPostLimiter } from "@/lib/rateLimit";
 
+export const runtime = "nodejs";
+
+// Sanity reference ID validation — arbitrary metin gönderilemesin
+const SANITY_ID_REGEX = /^[a-zA-Z0-9._-]{1,64}$/;
+
 /**
  * POST /api/comments
- * Body: { articleId: string, body: string }
+ * Body: { articleId: string, body: string, articleSlug?: string }
  * Requires Clerk authentication.
  */
 export async function POST(request: NextRequest) {
@@ -38,9 +43,17 @@ export async function POST(request: NextRequest) {
 
     const { articleId, body, articleSlug } = await request.json();
 
-    if (!articleId || !body || typeof body !== "string") {
+    if (!articleId || !body || typeof body !== "string" || typeof articleId !== "string") {
       return NextResponse.json(
         { error: "Eksik veya hatalı veri" },
+        { status: 400 }
+      );
+    }
+
+    // articleId format kontrolü — injection / rastgele veri gönderilemesin
+    if (!SANITY_ID_REGEX.test(articleId)) {
+      return NextResponse.json(
+        { error: "Geçersiz makale referansı" },
         { status: 400 }
       );
     }
