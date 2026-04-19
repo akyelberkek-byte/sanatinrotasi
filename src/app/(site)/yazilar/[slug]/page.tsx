@@ -3,7 +3,7 @@ import { urlFor } from "@/sanity/image";
 import { client } from "@/sanity/client";
 import { COMMENTS_BY_ARTICLE_QUERY, RELATED_ARTICLES_QUERY } from "@/sanity/queries";
 import ArticleCard from "@/components/shared/ArticleCard";
-import { isAdminEmail } from "@/lib/admin";
+import { isAdminUser } from "@/lib/admin";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -65,7 +65,7 @@ export default async function ArticlePage({ params }: Props) {
       }
     : null;
 
-  const isAdmin = isAdminEmail(user?.emailAddresses?.[0]?.emailAddress);
+  const isAdmin = isAdminUser(user);
 
   const date = article.publishedAt
     ? new Date(article.publishedAt).toLocaleDateString("tr-TR", {

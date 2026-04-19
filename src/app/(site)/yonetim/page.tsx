@@ -1,8 +1,7 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import { client } from "@/sanity/client";
-import { isAdminEmail } from "@/lib/admin";
+import { isAdminUser, ADMIN_EMAILS } from "@/lib/admin";
 import { groq } from "next-sanity";
 import type { Metadata } from "next";
 
@@ -41,13 +40,71 @@ const ADMIN_DASHBOARD_QUERY = groq`{
 
 export default async function AdminDashboardPage() {
   const user = await currentUser().catch(() => null);
-  const email = user?.emailAddresses?.[0]?.emailAddress;
 
+  // Giriş yapmamış → giriş sayfasına yönlendirmek yerine açıklayıcı mesaj
   if (!user) {
-    redirect("/giris?redirect_url=/yonetim");
+    return (
+      <div className="max-w-4xl mx-auto px-6 md:px-12 py-20 text-center">
+        <h1 className="font-display text-3xl font-bold text-ink mb-4">
+          Giriş Gerekli
+        </h1>
+        <p className="font-serif text-warm-gray mb-6">
+          Yönetim paneline erişmek için giriş yapman gerekiyor.
+        </p>
+        <Link
+          href="/giris?redirect_url=/yonetim"
+          className="inline-block font-sans text-[0.7rem] uppercase tracking-[0.2em] px-5 py-3 bg-ink text-cream hover:bg-accent transition-colors"
+        >
+          Giriş Yap
+        </Link>
+      </div>
+    );
   }
-  if (!isAdminEmail(email)) {
-    redirect("/");
+
+  // Admin değil → sessiz yönlendirme yerine hangi email ile girdiğini göster
+  if (!isAdminUser(user)) {
+    const primary = user.primaryEmailAddress?.emailAddress;
+    const allEmails = (user.emailAddresses || [])
+      .map((e) => e.emailAddress)
+      .filter(Boolean);
+    return (
+      <div className="max-w-4xl mx-auto px-6 md:px-12 py-20">
+        <h1 className="font-display text-3xl font-bold text-ink mb-4">
+          Yetkisiz
+        </h1>
+        <p className="font-serif text-warm-gray mb-4">
+          Bu sayfa sadece admin kullanıcılar içindir. Yanlış hesapla giriş
+          yaptıysan çıkış yapıp doğru hesapla tekrar giriş yap.
+        </p>
+        <div className="font-sans text-sm text-soft-black bg-paper/50 border border-ink/10 p-4 space-y-1">
+          <p>
+            <strong>Giriş yaptığın email:</strong> {primary || "—"}
+          </p>
+          {allEmails.length > 1 && (
+            <p className="text-warm-gray">
+              Diğer email(ler): {allEmails.filter((e) => e !== primary).join(", ")}
+            </p>
+          )}
+          <p className="text-warm-gray mt-2">
+            Beklenen admin email'leri: {ADMIN_EMAILS.join(" veya ")}
+          </p>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <Link
+            href="/"
+            className="font-sans text-[0.7rem] uppercase tracking-[0.2em] px-5 py-2 border border-ink text-ink hover:bg-ink hover:text-cream transition-colors"
+          >
+            Ana Sayfa
+          </Link>
+          <Link
+            href="/giris?redirect_url=/yonetim"
+            className="font-sans text-[0.7rem] uppercase tracking-[0.2em] px-5 py-2 bg-ink text-cream hover:bg-accent transition-colors"
+          >
+            Başka Hesapla Giriş
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   // 60s cache — admin paneli count/aggregation'ları Sanity quota'ya yüklenmesin

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { writeClient } from "@/sanity/writeClient";
-import { isAdminEmail } from "@/lib/admin";
+import { isAdminUser } from "@/lib/admin";
 import { revalidatePath } from "next/cache";
 import { commentDeleteLimiter } from "@/lib/rateLimit";
 
@@ -27,9 +27,8 @@ export async function DELETE(
     }
 
     const user = await currentUser();
-    const email = user?.emailAddresses?.[0]?.emailAddress;
 
-    if (!isAdminEmail(email)) {
+    if (!isAdminUser(user)) {
       return NextResponse.json(
         { error: "Yetkisiz işlem" },
         { status: 403 }
