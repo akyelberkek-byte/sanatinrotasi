@@ -1,11 +1,11 @@
 import { client } from "@/sanity/client";
 import { ROUTE_BY_SLUG_QUERY } from "@/sanity/queries";
 import { urlFor } from "@/sanity/image";
-import { PortableText } from "@portabletext/react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import SectionLabel from "@/components/shared/SectionLabel";
+import PortableRenderer from "@/components/shared/PortableRenderer";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
@@ -80,7 +80,7 @@ export default async function RoutePage({ params }: Props) {
       {/* Description */}
       {route.description && (
         <div className="portable-text mb-12 animate-fade-up stagger-2">
-          <PortableText value={route.description} />
+          <PortableRenderer value={route.description} />
         </div>
       )}
 

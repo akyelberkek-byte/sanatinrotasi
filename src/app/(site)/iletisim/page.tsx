@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PortableText } from "@portabletext/react";
+import PortableRenderer from "@/components/shared/PortableRenderer";
 import { client } from "@/sanity/client";
 import { PAGE_BY_SLUG_QUERY } from "@/sanity/queries";
 import ContactForm from "./ContactForm";
@@ -38,7 +38,7 @@ export default async function IletisimPage() {
 
       {page?.body && (
         <div className="portable-text mb-10 animate-fade-up stagger-1">
-          <PortableText value={page.body} />
+          <PortableRenderer value={page.body} />
         </div>
       )}
 

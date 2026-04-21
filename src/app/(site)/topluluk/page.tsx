@@ -1,4 +1,4 @@
-import { PortableText } from "@portabletext/react";
+import PortableRenderer from "@/components/shared/PortableRenderer";
 import { client } from "@/sanity/client";
 import { PAGE_BY_SLUG_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/queries";
 import SectionLabel from "@/components/shared/SectionLabel";
@@ -82,7 +82,7 @@ export default async function ToplulukPage() {
       {/* Page Body */}
       {page?.body && (
         <section className="portable-text animate-fade-up stagger-2">
-          <PortableText value={page.body} />
+          <PortableRenderer value={page.body} />
         </section>
       )}
 

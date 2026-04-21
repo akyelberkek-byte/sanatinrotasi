@@ -202,7 +202,17 @@ export const EVENT_BY_SLUG_QUERY = groq`
     endDate,
     location,
     mainImage,
-    description,
+    description[] {
+      ...,
+      _type == "image" => {
+        ...,
+        "asset": asset->{
+          _id,
+          url,
+          metadata { dimensions, lqip }
+        }
+      }
+    },
     price,
     externalUrl,
     featured,
@@ -234,7 +244,17 @@ export const ROUTE_BY_SLUG_QUERY = groq`
     subtitle,
     city,
     mainImage,
-    description,
+    description[] {
+      ...,
+      _type == "image" => {
+        ...,
+        "asset": asset->{
+          _id,
+          url,
+          metadata { dimensions, lqip }
+        }
+      }
+    },
     stops[] {
       name,
       description,
@@ -303,7 +323,17 @@ export const PAGE_BY_SLUG_QUERY = groq`
     headingHighlight,
     subtitle,
     lastUpdated,
-    body,
+    body[] {
+      ...,
+      _type == "image" => {
+        ...,
+        "asset": asset->{
+          _id,
+          url,
+          metadata { dimensions, lqip }
+        }
+      }
+    },
     seo
   }
 `;

@@ -1,10 +1,10 @@
 import { client } from "@/sanity/client";
 import { EVENT_BY_SLUG_QUERY } from "@/sanity/queries";
 import { urlFor } from "@/sanity/image";
-import { PortableText } from "@portabletext/react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import SectionLabel from "@/components/shared/SectionLabel";
+import PortableRenderer from "@/components/shared/PortableRenderer";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
@@ -110,7 +110,7 @@ export default async function EventPage({ params }: Props) {
 
       {event.description && (
         <div className="portable-text animate-fade-up stagger-2">
-          <PortableText value={event.description} />
+          <PortableRenderer value={event.description} />
         </div>
       )}
     </article>
