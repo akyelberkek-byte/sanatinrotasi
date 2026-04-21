@@ -84,6 +84,34 @@ export const ARTICLES_QUERY = groq`
   }
 `;
 
+// Yazılar sayfası için birleşik feed — yazılar + rotalar tek akışta
+// Rotalar "kind: route" olarak işaretlenir, kart bileşeni doğru URL'e yönlendirir.
+// Sıralama: article.publishedAt veya route._createdAt (coalesce ile normalize)
+export const ARTICLES_AND_ROUTES_QUERY = groq`
+  *[_type == "article" || _type == "route"]
+    | order(coalesce(publishedAt, _createdAt) desc) [0...$limit] {
+    _id,
+    _type,
+    title,
+    slug,
+    "publishedAt": coalesce(publishedAt, _createdAt),
+    "excerpt": coalesce(excerpt, subtitle),
+    mainImage,
+    featured,
+    _type == "article" => {
+      author-> { name, slug, image },
+      category-> { title, slug, color }
+    },
+    _type == "route" => {
+      "author": null,
+      "category": { "title": "Rota", "slug": null, "color": "accent" },
+      city,
+      duration,
+      "stopCount": count(stops),
+    }
+  }
+`;
+
 // Ana sayfadaki "Son Yazılar" — tüm yazılardan en yeniler (featured kısıtı yok)
 export const FEATURED_ARTICLES_QUERY = groq`
   *[_type == "article"] | order(publishedAt desc, _createdAt desc) [0...4] {

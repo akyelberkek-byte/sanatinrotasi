@@ -1,6 +1,10 @@
 import { client } from "@/sanity/client";
-import { ARTICLES_QUERY, CATEGORIES_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/queries";
-import ArticleCard from "@/components/shared/ArticleCard";
+import {
+  ARTICLES_AND_ROUTES_QUERY,
+  CATEGORIES_QUERY,
+  SITE_SETTINGS_QUERY,
+} from "@/sanity/queries";
+import ContentCard from "@/components/shared/ContentCard";
 import SectionLabel from "@/components/shared/SectionLabel";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -13,8 +17,10 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function YazilarPage() {
-  const [articles, categories, settings] = await Promise.all([
-    client.fetch(ARTICLES_QUERY, { limit: 50 }),
+  // Yazılar + Rotalar birleşik feed — rotalar ayrıca /rotalar'da da listeleniyor,
+  // ama burada da görünür olsun (kullanıcı tek yerden tüm içeriği tarayabilsin).
+  const [items, categories, settings] = await Promise.all([
+    client.fetch(ARTICLES_AND_ROUTES_QUERY, { limit: 60 }),
     client.fetch(CATEGORIES_QUERY),
     client.fetch(SITE_SETTINGS_QUERY).catch(() => null),
   ]);
@@ -55,11 +61,11 @@ export default async function YazilarPage() {
         </div>
       )}
 
-      {/* Articles grid */}
-      {articles && articles.length > 0 ? (
+      {/* Articles + Rotalar grid */}
+      {items && items.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-fade-up stagger-2">
-          {articles.map((article: any) => (
-            <ArticleCard key={article._id} article={article} />
+          {items.map((item: any) => (
+            <ContentCard key={item._id} item={item} />
           ))}
         </div>
       ) : (

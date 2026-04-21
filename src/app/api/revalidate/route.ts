@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
         break;
       case "route":
         revalidatePath("/");
+        revalidatePath("/yazilar"); // rotalar yazılar feed'inde de görünüyor
         revalidatePath("/rotalar");
         if (slug) revalidatePath(`/rotalar/${slug}`);
         break;
