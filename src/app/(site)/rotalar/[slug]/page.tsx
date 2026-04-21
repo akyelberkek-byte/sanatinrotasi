@@ -23,9 +23,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const route = await client.fetch(ROUTE_BY_SLUG_QUERY, { slug });
   if (!route) return {};
+
+  const title = route.seo?.metaTitle || route.title;
+  const description = route.seo?.metaDescription || route.subtitle;
+  const ogImageAsset = route.seo?.ogImage?.asset
+    ? route.seo.ogImage
+    : route.mainImage?.asset
+      ? route.mainImage
+      : null;
+  const ogImageUrl = ogImageAsset
+    ? urlFor(ogImageAsset).width(1200).height(630).url()
+    : undefined;
+
   return {
-    title: route.seo?.metaTitle || route.title,
-    description: route.seo?.metaDescription || route.subtitle,
+    title,
+    description,
+    openGraph: {
+      title,
+      description: description || undefined,
+      type: "article",
+      url: `https://sanatinrotasi.com/rotalar/${route.slug.current}`,
+      images: ogImageUrl ? [{ url: ogImageUrl, width: 1200, height: 630 }] : undefined,
+    },
+    twitter: {
+      card: ogImageUrl ? "summary_large_image" : "summary",
+      title,
+      description: description || undefined,
+      images: ogImageUrl ? [ogImageUrl] : undefined,
+    },
+    alternates: {
+      canonical: `https://sanatinrotasi.com/rotalar/${route.slug.current}`,
+    },
   };
 }
 

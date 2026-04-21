@@ -25,9 +25,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const event = await client.fetch(EVENT_BY_SLUG_QUERY, { slug });
   if (!event) return {};
+
+  const title = event.seo?.metaTitle || event.title;
+  const description =
+    event.seo?.metaDescription ||
+    `${EVENT_TYPE_LABELS[event.eventType] || ""} — ${event.title}`;
+  const ogImageAsset = event.seo?.ogImage?.asset
+    ? event.seo.ogImage
+    : event.mainImage?.asset
+      ? event.mainImage
+      : null;
+  const ogImageUrl = ogImageAsset
+    ? urlFor(ogImageAsset).width(1200).height(630).url()
+    : undefined;
+
   return {
-    title: event.seo?.metaTitle || event.title,
-    description: event.seo?.metaDescription || `${EVENT_TYPE_LABELS[event.eventType] || ""} — ${event.title}`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      url: `https://sanatinrotasi.com/etkinlikler/${event.slug.current}`,
+      images: ogImageUrl ? [{ url: ogImageUrl, width: 1200, height: 630 }] : undefined,
+    },
+    twitter: {
+      card: ogImageUrl ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: ogImageUrl ? [ogImageUrl] : undefined,
+    },
+    alternates: {
+      canonical: `https://sanatinrotasi.com/etkinlikler/${event.slug.current}`,
+    },
   };
 }
 

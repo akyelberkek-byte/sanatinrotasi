@@ -22,9 +22,42 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = await findArticleBySlug(slug);
   if (!article) return {};
+
+  const title = article.seo?.metaTitle || article.title;
+  const description = article.seo?.metaDescription || article.excerpt;
+  // OG image öncelik: SEO → mainImage → undefined
+  const ogImageAsset = article.seo?.ogImage?.asset
+    ? article.seo.ogImage
+    : article.mainImage?.asset
+      ? article.mainImage
+      : null;
+  const ogImageUrl = ogImageAsset
+    ? urlFor(ogImageAsset).width(1200).height(630).url()
+    : undefined;
+
   return {
-    title: article.seo?.metaTitle || article.title,
-    description: article.seo?.metaDescription || article.excerpt,
+    title,
+    description,
+    openGraph: {
+      title,
+      description: description || undefined,
+      type: "article",
+      url: `https://sanatinrotasi.com/yazilar/${article.slug.current}`,
+      images: ogImageUrl ? [{ url: ogImageUrl, width: 1200, height: 630 }] : undefined,
+      publishedTime: article.publishedAt,
+      authors: article.author?.name ? [article.author.name] : undefined,
+      section: article.category?.title,
+      tags: article.tags,
+    },
+    twitter: {
+      card: ogImageUrl ? "summary_large_image" : "summary",
+      title,
+      description: description || undefined,
+      images: ogImageUrl ? [ogImageUrl] : undefined,
+    },
+    alternates: {
+      canonical: `https://sanatinrotasi.com/yazilar/${article.slug.current}`,
+    },
   };
 }
 
@@ -227,8 +260,10 @@ export default async function ArticlePage({ params }: Props) {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Article",
-            headline: article.title,
-            description: article.excerpt || article.seo?.metaDescription,
+            // SEO metaTitle varsa onu öncelikle kullan (Ela özellikle seçmişse)
+            headline: article.seo?.metaTitle || article.title,
+            description:
+              article.seo?.metaDescription || article.excerpt,
             datePublished: article.publishedAt,
             dateModified: article._updatedAt || article.publishedAt,
             author: article.author?.name
@@ -239,9 +274,11 @@ export default async function ArticlePage({ params }: Props) {
               name: "Sanatın Rotası",
               url: "https://sanatinrotasi.com",
             },
-            image: article.mainImage?.asset
-              ? urlFor(article.mainImage).width(1200).height(630).url()
-              : undefined,
+            image: article.seo?.ogImage?.asset
+              ? urlFor(article.seo.ogImage).width(1200).height(630).url()
+              : article.mainImage?.asset
+                ? urlFor(article.mainImage).width(1200).height(630).url()
+                : undefined,
             mainEntityOfPage: {
               "@type": "WebPage",
               "@id": `https://sanatinrotasi.com/yazilar/${article.slug.current}`,
