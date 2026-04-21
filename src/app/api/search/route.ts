@@ -7,13 +7,14 @@ export const runtime = "nodejs";
 export const revalidate = 60;
 
 // GROQ injection ve match operator manipulation koruması.
-// $term parameterized; ek olarak wildcard/logical karakterlerini literal yapıyoruz.
+// $term parameterized; ek olarak wildcard/control karakterlerini literal yapıyoruz.
+// NOT: `&` korunuyor — Türkçe arama için önemli ("Sanat & Kültür" gibi).
 function sanitizeQuery(q: string): string {
   return q
     .replace(/[*?]/g, " ") // GROQ match wildcard
     .replace(/["\\]/g, "") // string delimiter
     .replace(/[()[\]{}]/g, " ") // grup/paren
-    .replace(/[&|!]/g, " ") // logical operatörler
+    .replace(/[|!]/g, " ") // logical operatörler (&& || ise iki kez gerekir, & ise logical değil)
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 80);

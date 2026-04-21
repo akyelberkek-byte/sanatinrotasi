@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { urlFor } from "@/sanity/image";
-import { turkishSlugify } from "@/sanity/lib/slugify";
 
 /**
  * Yazılar veya Rotaları tek listede gösteren birleşik kart.
@@ -18,7 +17,8 @@ export default function ContentCard({ item, featured = false }: ContentCardProps
   const isRoute = item._type === "route";
   const baseHref = isRoute ? "/rotalar" : "/yazilar";
   const slugStr = item.slug?.current || "";
-  const href = `${baseHref}/${turkishSlugify(slugStr)}`;
+  // Sanity slug zaten slugified; sadece URL-encode (özel karakter güvenliği için)
+  const href = `${baseHref}/${encodeURIComponent(slugStr)}`;
 
   const date = item.publishedAt
     ? new Date(item.publishedAt).toLocaleDateString("tr-TR", {

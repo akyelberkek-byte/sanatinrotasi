@@ -94,10 +94,10 @@ export default async function HomePage() {
               <Image
                 src={founderImageUrl}
                 alt={`${founder.name} — ${founder.role || ""}`}
-                width={420}
-                height={470}
+                width={840}
+                height={940}
+                sizes="(max-width: 768px) 100vw, 420px"
                 loading="lazy"
-                unoptimized={!!founder.image?.asset}
                 className="w-full grayscale-[15%] hover:grayscale-0 transition-all duration-500"
               />
               <div className="absolute inset-[8px] border border-white/40 pointer-events-none" />

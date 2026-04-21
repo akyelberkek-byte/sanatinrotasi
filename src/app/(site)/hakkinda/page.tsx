@@ -62,10 +62,10 @@ export default async function HakkindaPage() {
                 <Image
                   src={founderImageUrl}
                   alt={`${founder.name} — ${founder.role || ""}`}
-                  width={300}
-                  height={336}
+                  width={600}
+                  height={672}
+                  sizes="(max-width: 768px) 100vw, 400px"
                   loading="lazy"
-                  unoptimized={!!founder.image?.asset}
                   className="w-full grayscale-[15%] hover:grayscale-0 transition-all duration-500"
                 />
                 <div className="absolute inset-[8px] border border-white/40 pointer-events-none" />

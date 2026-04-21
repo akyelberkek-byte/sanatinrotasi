@@ -7,7 +7,7 @@ import type { NextConfig } from "next";
 const csp = [
   "default-src 'self'",
   // Clerk: dev + prod FAPI + hosted UI + stable wildcard
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://*.accounts.dev https://clerk.sanatinrotasi.com https://accounts.sanatinrotasi.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://vercel.live",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://*.accounts.dev https://clerk.sanatinrotasi.com https://accounts.sanatinrotasi.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://cdn.sanity.io https://img.clerk.com https://images.clerk.dev https://*.clerk.com https://*.vercel-insights.com",

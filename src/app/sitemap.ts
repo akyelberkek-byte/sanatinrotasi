@@ -47,6 +47,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/acik-riza`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
   ];
 
+  // Safe date parser: geçersiz ISO → now fallback (Invalid Date sitemap'i bozmasın)
+  const safeDate = (iso?: string) => {
+    if (!iso) return new Date();
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? new Date() : d;
+  };
+
   const toEntry = (
     prefix: string,
     items: SlugEntry[],
@@ -56,8 +63,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     items
       .filter((i) => i && i.slug)
       .map((i) => ({
-        url: `${SITE_URL}${prefix}/${i.slug}`,
-        lastModified: i._updatedAt ? new Date(i._updatedAt) : new Date(),
+        url: `${SITE_URL}${prefix}/${encodeURIComponent(i.slug)}`,
+        lastModified: safeDate(i._updatedAt),
         changeFrequency,
         priority,
       }));

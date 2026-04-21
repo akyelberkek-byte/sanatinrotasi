@@ -196,7 +196,7 @@ export default async function AdminDashboardPage() {
                       </p>
                       {c.articleTitle && c.articleSlug && (
                         <Link
-                          href={`/yazilar/${c.articleSlug}`}
+                          href={`/yazilar/${encodeURIComponent(c.articleSlug)}`}
                           className="font-sans text-[0.6rem] uppercase tracking-[0.2em] text-warm-gray hover:text-accent mt-1 block"
                         >
                           {c.articleTitle}
@@ -225,7 +225,7 @@ export default async function AdminDashboardPage() {
                   {data.latestArticles.map((a: any) => (
                     <li key={a._id} className="border-b border-ink/10 pb-3">
                       <Link
-                        href={`/yazilar/${a.slug?.current}`}
+                        href={`/yazilar/${encodeURIComponent(a.slug?.current || "")}`}
                         className="font-display text-base font-bold text-ink hover:text-accent transition-colors block"
                       >
                         {a.title}

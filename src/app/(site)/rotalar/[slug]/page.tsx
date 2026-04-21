@@ -6,6 +6,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import SectionLabel from "@/components/shared/SectionLabel";
 import PortableRenderer from "@/components/shared/PortableRenderer";
+import { readingTimeMinutes } from "@/lib/readingTime";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
@@ -32,6 +33,8 @@ export default async function RoutePage({ params }: Props) {
   const { slug } = await params;
   const route = await client.fetch(ROUTE_BY_SLUG_QUERY, { slug });
   if (!route) notFound();
+
+  const readMinutes = readingTimeMinutes(route.description);
 
   return (
     <article className="max-w-4xl mx-auto px-6 md:px-12 py-12">
@@ -60,6 +63,12 @@ export default async function RoutePage({ params }: Props) {
               <span>{DIFFICULTY_LABELS[route.difficulty]}</span>
             </>
           )}
+          {readMinutes > 0 && route.description && (
+            <>
+              <span>·</span>
+              <span>{readMinutes} dk okuma</span>
+            </>
+          )}
         </div>
       </header>
 
@@ -67,11 +76,12 @@ export default async function RoutePage({ params }: Props) {
       {route.mainImage && (
         <div className="mb-10 animate-fade-up stagger-1">
           <Image
-            src={urlFor(route.mainImage).width(1200).height(675).url()}
+            src={urlFor(route.mainImage).width(1600).height(900).fit("max").url()}
             alt={route.title}
-            width={1200}
-            height={675}
-            className="w-full"
+            width={1600}
+            height={900}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
+            className="w-full h-auto"
             priority
           />
         </div>
@@ -140,6 +150,37 @@ export default async function RoutePage({ params }: Props) {
           ))}
         </div>
       )}
+
+      {/* Schema.org JSON-LD — Google rich results için TouristTrip/Article hibrit */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "TouristTrip",
+            name: route.title,
+            description: route.subtitle || route.seo?.metaDescription,
+            image: route.mainImage?.asset
+              ? urlFor(route.mainImage).width(1200).height(630).url()
+              : undefined,
+            touristType: "Art & Culture",
+            itinerary:
+              Array.isArray(route.stops) && route.stops.length > 0
+                ? route.stops.map((s: any) => ({
+                    "@type": "TouristAttraction",
+                    name: s.name,
+                    description: s.description,
+                  }))
+                : undefined,
+            provider: {
+              "@type": "Organization",
+              name: "Sanatın Rotası",
+              url: "https://sanatinrotasi.com",
+            },
+            url: `https://sanatinrotasi.com/rotalar/${route.slug.current}`,
+          }),
+        }}
+      />
     </article>
   );
 }

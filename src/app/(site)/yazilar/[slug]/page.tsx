@@ -147,9 +147,9 @@ export default async function ArticlePage({ params }: Props) {
               alt={heroImage.alt || article.title}
               width={1600}
               height={900}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
               className="w-full h-auto"
               priority
-              unoptimized
             />
           </div>
         );
