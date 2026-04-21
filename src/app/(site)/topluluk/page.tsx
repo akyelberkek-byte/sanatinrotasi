@@ -1,6 +1,8 @@
+import Link from "next/link";
 import PortableRenderer from "@/components/shared/PortableRenderer";
 import { client } from "@/sanity/client";
-import { PAGE_BY_SLUG_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/queries";
+import { PAGE_BY_SLUG_QUERY } from "@/sanity/queries";
+import { getSiteSettings } from "@/sanity/lib/settings";
 import SectionLabel from "@/components/shared/SectionLabel";
 import NewsletterForm from "@/components/shared/NewsletterForm";
 import type { Metadata } from "next";
@@ -21,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ToplulukPage() {
   const [page, settings] = await Promise.all([
     client.fetch(PAGE_BY_SLUG_QUERY, { slug: "topluluk" }),
-    client.fetch(SITE_SETTINGS_QUERY),
+    getSiteSettings(),
   ]);
 
   return (
@@ -57,13 +59,27 @@ export default async function ToplulukPage() {
           {settings?.submitArtDescription ||
             "Üretimlerinle Sanatın Rotası'nda yer almak ister misin? Kendi sanatını, projelerini ya da hikayeni paylaşmak için bize ulaş. Seninle tanışmayı çok isteriz."}
         </p>
-        <a
-          href={settings?.submitArtCtaUrl || "/iletisim"}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-cream font-sans text-xs uppercase tracking-[0.2em] border-2 border-accent hover:bg-accent-dark hover:border-accent-dark transition-colors"
-        >
-          {settings?.submitArtCtaText || "Bize Ulaş"}
-          <span aria-hidden="true">→</span>
-        </a>
+        {(() => {
+          const ctaUrl = settings?.submitArtCtaUrl || "/iletisim";
+          const isExternal = /^https?:\/\//.test(ctaUrl);
+          const cls =
+            "inline-flex items-center gap-2 px-6 py-3 bg-accent text-cream font-sans text-xs uppercase tracking-[0.2em] border-2 border-accent hover:bg-accent-dark hover:border-accent-dark transition-colors";
+          const label = (
+            <>
+              {settings?.submitArtCtaText || "Bize Ulaş"}
+              <span aria-hidden="true">→</span>
+            </>
+          );
+          return isExternal ? (
+            <a href={ctaUrl} target="_blank" rel="noopener noreferrer" className={cls}>
+              {label}
+            </a>
+          ) : (
+            <Link href={ctaUrl} className={cls}>
+              {label}
+            </Link>
+          );
+        })()}
       </section>
 
       {/* Newsletter */}

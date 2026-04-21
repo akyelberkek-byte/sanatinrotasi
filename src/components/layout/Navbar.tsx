@@ -3,21 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-
-let useAuth: any;
-let UserButton: any;
-let SignInButton: any;
-let SignUpButton: any;
-
-try {
-  const clerk = require("@clerk/nextjs");
-  useAuth = clerk.useAuth;
-  UserButton = clerk.UserButton;
-  SignInButton = clerk.SignInButton;
-  SignUpButton = clerk.SignUpButton;
-} catch {
-  // Clerk not available
-}
+import {
+  useAuth,
+  UserButton,
+  SignInButton,
+  SignUpButton,
+} from "@clerk/nextjs";
 
 const NAV_LINKS = [
   { href: "/", label: "Ana Sayfa" },
@@ -30,83 +21,77 @@ const NAV_LINKS = [
   { href: "/iletisim", label: "İletişim" },
 ];
 
+/**
+ * AuthButtons: Clerk hook'ları koşulsuz çağrılır (rules-of-hooks uyumu).
+ * Clerk provider yoksa (env var eksik), isLoaded=false kalır ve UserButton
+ * render edilmez — safe.
+ */
 function AuthButtons() {
-  try {
-    if (!useAuth) return null;
-    const { isSignedIn, isLoaded } = useAuth();
-    if (!isLoaded) return null;
+  const { isSignedIn, isLoaded } = useAuth();
 
-    if (isSignedIn) {
-      return (
-        <div className="flex items-center gap-3">
-          <Link
-            href="/profil"
-            className="font-sans text-[0.7rem] uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors link-underline"
-          >
-            Profilim
-          </Link>
-          {UserButton && (
-            <UserButton
-              appearance={{
-                elements: { avatarBox: "w-8 h-8" },
-              }}
-            />
-          )}
-        </div>
-      );
-    }
+  if (!isLoaded) {
+    return <div className="w-8 h-8" aria-hidden="true" />;
+  }
 
-    return (
-      <div className="flex items-center gap-3">
-        {SignInButton ? (
-          <SignInButton mode="redirect">
-            <button className="font-sans text-[0.7rem] uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors cursor-pointer">
-              Giriş
-            </button>
-          </SignInButton>
-        ) : (
-          <Link
-            href="/giris"
-            className="font-sans text-[0.7rem] uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors"
-          >
-            Giriş
-          </Link>
-        )}
-        {SignUpButton ? (
-          <SignUpButton mode="redirect">
-            <button className="font-sans text-[0.65rem] uppercase tracking-[0.2em] px-4 py-2 bg-ink text-cream hover:bg-accent transition-colors cursor-pointer">
-              Kayıt Ol
-            </button>
-          </SignUpButton>
-        ) : (
-          <Link
-            href="/kayit"
-            className="font-sans text-[0.65rem] uppercase tracking-[0.2em] px-4 py-2 bg-ink text-cream hover:bg-accent transition-colors"
-          >
-            Kayıt Ol
-          </Link>
-        )}
-      </div>
-    );
-  } catch {
-    // Fallback when Clerk is not configured
+  if (isSignedIn) {
     return (
       <div className="flex items-center gap-3">
         <Link
-          href="/giris"
-          className="font-sans text-[0.7rem] uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors"
+          href="/profil"
+          className="font-sans text-[0.7rem] uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors link-underline"
         >
-          Giriş
+          Profilim
         </Link>
-        <Link
-          href="/kayit"
-          className="font-sans text-[0.65rem] uppercase tracking-[0.2em] px-4 py-2 bg-ink text-cream hover:bg-accent transition-colors"
-        >
-          Kayıt Ol
-        </Link>
+        <UserButton
+          appearance={{
+            elements: { avatarBox: "w-8 h-8" },
+          }}
+        />
       </div>
     );
   }
+
+  return (
+    <div className="flex items-center gap-3">
+      <SignInButton mode="redirect">
+        <button className="font-sans text-[0.7rem] uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors cursor-pointer">
+          Giriş
+        </button>
+      </SignInButton>
+      <SignUpButton mode="redirect">
+        <button className="font-sans text-[0.65rem] uppercase tracking-[0.2em] px-4 py-2 bg-ink text-cream hover:bg-accent transition-colors cursor-pointer">
+          Kayıt Ol
+        </button>
+      </SignUpButton>
+    </div>
+  );
+}
+
+/**
+ * Clerk keys yoksa AuthButtons yerine düz linkler göster.
+ * Build zamanında env var'lara bakıp hangi komponenti render edeceğimize karar veririz.
+ */
+const hasClerkKeys = !!(
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+);
+
+function FallbackAuthButtons() {
+  return (
+    <div className="flex items-center gap-3">
+      <Link
+        href="/giris"
+        className="font-sans text-[0.7rem] uppercase tracking-[0.2em] text-soft-black hover:text-accent transition-colors"
+      >
+        Giriş
+      </Link>
+      <Link
+        href="/kayit"
+        className="font-sans text-[0.65rem] uppercase tracking-[0.2em] px-4 py-2 bg-ink text-cream hover:bg-accent transition-colors"
+      >
+        Kayıt Ol
+      </Link>
+    </div>
+  );
 }
 
 interface NavbarProps {
@@ -124,10 +109,10 @@ export default function Navbar({ logoUrl }: NavbarProps) {
           <Image
             src={logo}
             alt="Sanatın Rotası - Ana sayfa"
-            width={45}
-            height={45}
-            unoptimized={logoUrl ? true : false}
-            className="transition-transform group-hover:scale-105"
+            width={90}
+            height={90}
+            sizes="45px"
+            className="w-[45px] h-[45px] transition-transform group-hover:scale-105"
           />
           <div>
             <span className="font-display text-xl md:text-2xl font-bold tracking-tight text-ink leading-tight block">
@@ -148,7 +133,7 @@ export default function Navbar({ logoUrl }: NavbarProps) {
             </Link>
           ))}
           <div className="ml-1 xl:ml-3">
-            <AuthButtons />
+            {hasClerkKeys ? <AuthButtons /> : <FallbackAuthButtons />}
           </div>
         </div>
 
@@ -179,7 +164,7 @@ export default function Navbar({ logoUrl }: NavbarProps) {
               </Link>
             ))}
             <div className="pt-2">
-              <AuthButtons />
+              {hasClerkKeys ? <AuthButtons /> : <FallbackAuthButtons />}
             </div>
           </div>
         </div>

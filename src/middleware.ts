@@ -30,9 +30,15 @@ export default hasClerkKeys
     })
   : fallbackMiddleware;
 
+// Matcher:
+// - Tüm sayfa route'ları (statik asset'ler hariç)
+// - Sadece AUTH GEREKEN API'lar: /api/comments/:path, /api/favorites/:path
+//   → diğer API'lar (revalidate webhook, search, contact, newsletter,
+//      draft-mode) Clerk overhead'ı olmadan çalışır.
 export const config = {
   matcher: [
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    "/(api|trpc)(.*)",
+    "/api/comments/:path*",
+    "/api/favorites/:path*",
   ],
 };

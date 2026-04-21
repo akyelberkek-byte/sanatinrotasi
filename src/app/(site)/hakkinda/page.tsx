@@ -5,8 +5,8 @@ import { urlFor } from "@/sanity/image";
 import {
   PAGE_BY_SLUG_QUERY,
   FOUNDER_QUERY,
-  SITE_SETTINGS_QUERY,
 } from "@/sanity/queries";
+import { getSiteSettings } from "@/sanity/lib/settings";
 import SectionLabel from "@/components/shared/SectionLabel";
 import type { Metadata } from "next";
 
@@ -27,7 +27,7 @@ export default async function HakkindaPage() {
   const [page, founder, settings] = await Promise.all([
     client.fetch(PAGE_BY_SLUG_QUERY, { slug: "hakkinda" }),
     client.fetch(FOUNDER_QUERY),
-    client.fetch(SITE_SETTINGS_QUERY),
+    getSiteSettings(),
   ]);
 
   const founderImageUrl = founder?.image?.asset

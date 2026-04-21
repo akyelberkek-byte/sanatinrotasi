@@ -1,16 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
-// Next 16 revalidateTag imzası için wrapper
+import { parseBody } from "next-sanity/webhook";
+import { captureError } from "@/lib/observability";
+
+// Next 16'da revalidateTag + revalidatePath imzaları değişti (type signature);
+// runtime'da aynı çalışıyor ama TypeScript hatalarını bastıran ve throw etse bile
+// diğer path'lerin revalidate olmaya devam etmesini sağlayan wrapper'lar.
 function safeRevalidateTag(tag: string) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (revalidateTag as any)(tag);
   } catch {
-    // ignore
+    /* ignore */
   }
 }
-import { parseBody } from "next-sanity/webhook";
-import { captureError } from "@/lib/observability";
+
+function safeRevalidatePath(path: string, type?: "page" | "layout") {
+  try {
+    if (type) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (revalidatePath as any)(path, type);
+    } else {
+      revalidatePath(path);
+    }
+  } catch (e) {
+    captureError(e, { path, type, where: "safeRevalidatePath" });
+  }
+}
 
 export const runtime = "nodejs";
 
@@ -30,12 +46,17 @@ export const runtime = "nodejs";
  *   API version: 2025-01-01
  *   Include drafts: hayır
  *   Secret: SANITY_WEBHOOK_SECRET env var ile aynı değer
- *   Projection: { "_type": _type, "slug": slug.current }
+ *   Projection: {
+ *     "_type": _type,
+ *     "slug": slug.current,
+ *     "articleSlug": article->slug.current  // comment için (varsa)
+ *   }
  */
 
 type Body = {
   _type?: string;
   slug?: string;
+  articleSlug?: string; // comment → article.slug projection için
 };
 
 export async function POST(request: NextRequest) {
@@ -64,42 +85,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Bad body" }, { status: 400 });
     }
 
-    const { _type, slug } = body;
+    const { _type, slug, articleSlug } = body;
 
     // Tip bazlı revalidation — sadece etkilenen sayfalar
     switch (_type) {
       case "article":
-        revalidatePath("/");
-        revalidatePath("/yazilar");
-        revalidatePath("/roportajlar");
-        if (slug) revalidatePath(`/yazilar/${slug}`);
+        safeRevalidatePath("/");
+        safeRevalidatePath("/yazilar");
+        safeRevalidatePath("/roportajlar");
+        if (slug) safeRevalidatePath(`/yazilar/${slug}`);
         safeRevalidateTag("articles:slugs");
         break;
       case "event":
-        revalidatePath("/");
-        revalidatePath("/etkinlikler");
-        if (slug) revalidatePath(`/etkinlikler/${slug}`);
+        safeRevalidatePath("/");
+        safeRevalidatePath("/etkinlikler");
+        if (slug) safeRevalidatePath(`/etkinlikler/${slug}`);
         break;
       case "route":
-        revalidatePath("/");
-        revalidatePath("/yazilar"); // rotalar yazılar feed'inde de görünüyor
-        revalidatePath("/rotalar");
-        if (slug) revalidatePath(`/rotalar/${slug}`);
+        safeRevalidatePath("/");
+        safeRevalidatePath("/yazilar"); // rotalar yazılar feed'inde de görünüyor
+        safeRevalidatePath("/rotalar");
+        if (slug) safeRevalidatePath(`/rotalar/${slug}`);
         break;
       case "category":
-        revalidatePath("/");
-        revalidatePath("/yazilar");
-        if (slug) revalidatePath(`/kategori/${slug}`);
+        safeRevalidatePath("/");
+        safeRevalidatePath("/yazilar");
+        if (slug) safeRevalidatePath(`/kategori/${slug}`);
         break;
       case "comment":
-        // Comment'in slug'ı yok, article referansı var; safe fallback: comment içinden article slug iletmek istersen projection güncelle
-        // Şimdilik tüm yorum sayfalarını etkileyecek ortak bir path yok, sadece ana sayfaya dokunma yeterli
+        // Ela Studio'dan yorumu onayladığında/reddettiğinde ilgili yazı sayfası yenilensin.
+        // Sanity webhook projection'ına `"articleSlug": article->slug.current` eklenmeli.
+        if (articleSlug) {
+          safeRevalidatePath(`/yazilar/${articleSlug}`);
+        }
         break;
       case "siteSettings":
       case "page":
       case "author":
         // Bu tip değişince tüm site etkileniyor — toptan revalidate
-        revalidatePath("/", "layout");
+        safeRevalidatePath("/", "layout");
         break;
       default:
         break;

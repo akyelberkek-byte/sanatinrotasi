@@ -2,8 +2,8 @@ import { client } from "@/sanity/client";
 import {
   ARTICLES_AND_ROUTES_QUERY,
   CATEGORIES_QUERY,
-  SITE_SETTINGS_QUERY,
 } from "@/sanity/queries";
+import { getSiteSettings } from "@/sanity/lib/settings";
 import ContentCard from "@/components/shared/ContentCard";
 import SectionLabel from "@/components/shared/SectionLabel";
 import Link from "next/link";
@@ -22,7 +22,7 @@ export default async function YazilarPage() {
   const [items, categories, settings] = await Promise.all([
     client.fetch(ARTICLES_AND_ROUTES_QUERY, { limit: 60 }),
     client.fetch(CATEGORIES_QUERY),
-    client.fetch(SITE_SETTINGS_QUERY).catch(() => null),
+    getSiteSettings(),
   ]);
   const emptyText =
     settings?.emptyArticlesText || "Henüz yayınlanmış yazı bulunmuyor.";

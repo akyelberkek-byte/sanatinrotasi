@@ -1,14 +1,13 @@
 import TopBar from "@/components/layout/TopBar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { client } from "@/sanity/client";
-import { SITE_SETTINGS_QUERY } from "@/sanity/queries";
+import { getSiteSettings } from "@/sanity/lib/settings";
 import { urlFor } from "@/sanity/image";
 
 export const revalidate = 60;
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const settings = await client.fetch(SITE_SETTINGS_QUERY).catch(() => null);
+  const settings = await getSiteSettings();
 
   const logoUrl = settings?.logo?.asset
     ? urlFor(settings.logo).width(400).height(400).url()

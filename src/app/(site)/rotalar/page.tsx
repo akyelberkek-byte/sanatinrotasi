@@ -1,5 +1,6 @@
 import { client } from "@/sanity/client";
-import { ROUTES_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/queries";
+import { ROUTES_QUERY } from "@/sanity/queries";
+import { getSiteSettings } from "@/sanity/lib/settings";
 import RouteCard from "@/components/shared/RouteCard";
 import SectionLabel from "@/components/shared/SectionLabel";
 import type { Metadata } from "next";
@@ -14,7 +15,7 @@ export const revalidate = 60;
 export default async function RotalarPage() {
   const [routes, settings] = await Promise.all([
     client.fetch(ROUTES_QUERY),
-    client.fetch(SITE_SETTINGS_QUERY).catch(() => null),
+    getSiteSettings(),
   ]);
   const emptyText =
     settings?.emptyRoutesText || "Henüz yayınlanmış rota bulunmuyor.";

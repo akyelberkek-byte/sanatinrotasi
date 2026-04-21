@@ -24,8 +24,16 @@ export async function findArticleBySlug(slug: string) {
   );
   if (article) return article;
 
-  // Fallback: normalize the incoming slug and check all stored slugs
-  const normalizedIncoming = turkishSlugify(decodeURIComponent(slug));
+  // Fallback: normalize the incoming slug and check all stored slugs.
+  // Next.js 16 params'ı zaten decode ediyor, yine de bozuk encoding gelirse
+  // URIError fırlatmasın diye güvenli decode.
+  let decoded = slug;
+  try {
+    decoded = decodeURIComponent(slug);
+  } catch {
+    /* Zaten decoded ya da hatalı encoding — raw slug'ı kullan */
+  }
+  const normalizedIncoming = turkishSlugify(decoded);
   if (!normalizedIncoming) return null;
 
   // This list of slugs is cached for 60s to avoid hammering Sanity when

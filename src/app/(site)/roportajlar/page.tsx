@@ -2,8 +2,8 @@ import { client } from "@/sanity/client";
 import {
   ARTICLES_BY_CATEGORY_QUERY,
   CATEGORIES_QUERY,
-  SITE_SETTINGS_QUERY,
 } from "@/sanity/queries";
+import { getSiteSettings } from "@/sanity/lib/settings";
 import ArticleCard from "@/components/shared/ArticleCard";
 import SectionLabel from "@/components/shared/SectionLabel";
 import Link from "next/link";
@@ -21,7 +21,7 @@ export default async function RoportajlarPage() {
   const [articles, categories, settings] = await Promise.all([
     client.fetch(ARTICLES_BY_CATEGORY_QUERY, { categorySlug: "roportajlar" }),
     client.fetch(CATEGORIES_QUERY),
-    client.fetch(SITE_SETTINGS_QUERY).catch(() => null),
+    getSiteSettings(),
   ]);
 
   const heading = settings?.roportajlarHeading || "Sanatın";

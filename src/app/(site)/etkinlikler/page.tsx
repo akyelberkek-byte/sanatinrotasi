@@ -1,5 +1,6 @@
 import { client } from "@/sanity/client";
-import { EVENTS_QUERY, SITE_SETTINGS_QUERY } from "@/sanity/queries";
+import { EVENTS_QUERY } from "@/sanity/queries";
+import { getSiteSettings } from "@/sanity/lib/settings";
 import EventCard from "@/components/shared/EventCard";
 import SectionLabel from "@/components/shared/SectionLabel";
 import type { Metadata } from "next";
@@ -14,7 +15,7 @@ export const revalidate = 60;
 export default async function EtkinliklerPage() {
   const [events, settings] = await Promise.all([
     client.fetch(EVENTS_QUERY, { limit: 50 }),
-    client.fetch(SITE_SETTINGS_QUERY).catch(() => null),
+    getSiteSettings(),
   ]);
   const emptyText = settings?.emptyEventsText || "Yaklaşan etkinlik bulunmuyor.";
 

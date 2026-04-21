@@ -7,10 +7,10 @@ import {
   FEATURED_ARTICLES_QUERY,
   EVENTS_QUERY,
   ROUTES_QUERY,
-  SITE_SETTINGS_QUERY,
   CATEGORIES_QUERY,
   FOUNDER_QUERY,
 } from "@/sanity/queries";
+import { getSiteSettings } from "@/sanity/lib/settings";
 import ArticleCard from "@/components/shared/ArticleCard";
 import EventCard from "@/components/shared/EventCard";
 import RouteCard from "@/components/shared/RouteCard";
@@ -22,7 +22,7 @@ export const revalidate = 60;
 
 export default async function HomePage() {
   const [settings, articles, events, routes, categories, founder] = await Promise.all([
-    client.fetch(SITE_SETTINGS_QUERY),
+    getSiteSettings(),
     client.fetch(FEATURED_ARTICLES_QUERY),
     client.fetch(EVENTS_QUERY, { limit: 4 }),
     client.fetch(ROUTES_QUERY),
@@ -45,9 +45,9 @@ export default async function HomePage() {
         <Image
           src={logoUrl}
           alt="Sanatın Rotası Logo"
-          width={260}
-          height={260}
-          unoptimized={!!settings?.logo?.asset}
+          width={320}
+          height={320}
+          sizes="(max-width: 768px) 130px, 160px"
           className="mx-auto mb-6 w-[130px] md:w-[160px] h-auto"
           priority
         />
