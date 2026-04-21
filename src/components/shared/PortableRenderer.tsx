@@ -2,18 +2,55 @@ import { PortableText, PortableTextReactComponents } from "@portabletext/react";
 import Image from "next/image";
 import { urlFor } from "@/sanity/image";
 
+// Sanity inline image tipi — asset expand edilmiş ya da sadece referans olabilir
+type InlineImage = {
+  _type?: string;
+  _key?: string;
+  caption?: string;
+  attribution?: string;
+  alt?: string;
+  asset?: {
+    _id?: string;
+    _ref?: string;
+    url?: string;
+    metadata?: {
+      dimensions?: { width?: number; height?: number; aspectRatio?: number };
+      lqip?: string;
+    };
+  };
+};
+
 const components: Partial<PortableTextReactComponents> = {
   types: {
-    image: ({ value }: any) => {
+    image: ({ value }: { value: InlineImage }) => {
+      // Sanity'de image bloğu henüz asset seçilmeden eklenmişse değilse bile
+      // bir placeholder göstermek yerine null dön (UI temiz kalsın).
       if (!value?.asset) return null;
+
+      // Gerçek görsel boyutlarını kullan — 16:9'a zorlama, portrait/landscape korun.
+      const dim = value.asset.metadata?.dimensions;
+      const width = dim?.width ?? 1600;
+      const height = dim?.height ?? Math.round(width / 1.6);
+      const lqip = value.asset.metadata?.lqip;
+
+      // Sanity CDN URL — urlFor stub döndürürse raw url'e düş (expand edilmiş asset'te var).
+      const src =
+        urlFor(value).width(1600).fit("max").auto("format").url() ||
+        value.asset.url ||
+        "";
+      if (!src) return null;
+
       return (
         <figure className="my-8">
           <Image
-            src={urlFor(value).width(1200).url()}
-            alt={value.caption || ""}
-            width={1200}
-            height={675}
-            className="w-full"
+            src={src}
+            alt={value.alt || value.caption || ""}
+            width={width}
+            height={height}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
+            placeholder={lqip ? "blur" : "empty"}
+            blurDataURL={lqip}
+            className="w-full h-auto"
           />
           {value.caption && (
             <figcaption className="font-sans text-xs text-warm-gray mt-2 text-center">
@@ -24,7 +61,8 @@ const components: Partial<PortableTextReactComponents> = {
         </figure>
       );
     },
-    youtube: ({ value }: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    youtube: ({ value }: { value: any }) => {
       if (!value?.url) return null;
       const videoId = value.url.match(
         /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/
@@ -53,6 +91,7 @@ const components: Partial<PortableTextReactComponents> = {
   },
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function PortableRenderer({ value }: { value: any }) {
   if (!value) return null;
   return <PortableText value={value} components={components} />;

@@ -116,7 +116,12 @@ export const ARTICLE_BY_SLUG_QUERY = groq`
       ...,
       _type == "image" => {
         ...,
-        asset->
+        "asset": asset->{
+          _id,
+          _ref,
+          url,
+          metadata { dimensions, lqip }
+        }
       }
     },
     tags,
