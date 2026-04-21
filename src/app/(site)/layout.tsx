@@ -1,6 +1,7 @@
 import TopBar from "@/components/layout/TopBar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import PageViewTracker from "@/components/shared/PageViewTracker";
 import { getSiteSettings } from "@/sanity/lib/settings";
 import { urlFor } from "@/sanity/image";
 
@@ -26,6 +27,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <main id="main-content" className="flex-1">
         {children}
       </main>
+      <PageViewTracker />
       <Footer
         footerText={settings?.footerText}
         instagramUrl={settings?.socialLinks?.instagram}

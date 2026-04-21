@@ -2,6 +2,7 @@ import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import { client } from "@/sanity/client";
 import { isAdminUser, ADMIN_EMAILS } from "@/lib/admin";
+import { getAnalyticsStats } from "@/lib/analytics";
 import { groq } from "next-sanity";
 import type { Metadata } from "next";
 
@@ -108,9 +109,15 @@ export default async function AdminDashboardPage() {
   }
 
   // 60s cache — admin paneli count/aggregation'ları Sanity quota'ya yüklenmesin
-  const data = await client
-    .fetch(ADMIN_DASHBOARD_QUERY, {}, { next: { revalidate: 60 } })
-    .catch(() => null);
+  const [data, analytics] = await Promise.all([
+    client
+      .fetch(ADMIN_DASHBOARD_QUERY, {}, { next: { revalidate: 60 } })
+      .catch(() => null),
+    getAnalyticsStats().catch(() => null),
+  ]);
+
+  const fmtNumber = (n: number) =>
+    new Intl.NumberFormat("tr-TR").format(n || 0);
 
   const fmtDate = (iso?: string) =>
     iso
@@ -150,6 +157,83 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
       </header>
+
+      {/* Ziyaretçi Analitiği */}
+      <section className="mb-10">
+        <h2 className="font-display text-xl font-bold text-ink mb-4 pb-2 border-b-2 border-ink">
+          Ziyaretçi Analitiği
+        </h2>
+        {analytics ? (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <Stat label="Bugün" value={analytics.today} highlight={analytics.today > 0} />
+              <Stat label="Dün" value={analytics.yesterday} />
+              <Stat label="Son 7 Gün" value={analytics.last7Days} />
+              <Stat label="Son 30 Gün" value={analytics.last30Days} />
+              <Stat label="Bu Ay" value={analytics.thisMonth} />
+              <Stat label="Toplam" value={analytics.total} />
+            </div>
+
+            {/* Mini 30 günlük bar grafik */}
+            {analytics.daily.length > 0 && (() => {
+              const max = Math.max(1, ...analytics.daily.map((d) => d.count));
+              return (
+                <div className="mt-6 p-4 border border-ink/10 bg-paper/30">
+                  <div className="font-sans text-[0.6rem] uppercase tracking-[0.2em] text-warm-gray mb-3">
+                    Son 30 gün (günlük görüntüleme)
+                  </div>
+                  <div className="flex items-end gap-[2px] h-24">
+                    {analytics.daily.map((d) => {
+                      const h = (d.count / max) * 100;
+                      return (
+                        <div
+                          key={d.date}
+                          className="flex-1 bg-accent/70 hover:bg-accent transition-colors min-h-[1px]"
+                          style={{ height: `${Math.max(1, h)}%` }}
+                          title={`${d.date}: ${fmtNumber(d.count)} görüntüleme`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between font-sans text-[0.55rem] text-warm-gray mt-2">
+                    <span>{analytics.daily[0]?.date}</span>
+                    <span>{analytics.daily[analytics.daily.length - 1]?.date}</span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <p className="font-sans text-[0.6rem] text-warm-gray mt-3">
+              Bot'lar ve /yonetim, /studio, /giris, /kayit sayfaları sayılmaz. Detaylı analitik için{" "}
+              <a href="https://vercel.com/dashboard" target="_blank" rel="noopener" className="text-accent underline">
+                Vercel Analytics
+              </a>'e bak.
+            </p>
+          </>
+        ) : (
+          <div className="p-6 border-2 border-accent/30 bg-accent/5">
+            <p className="font-serif text-soft-black mb-3">
+              Ziyaretçi sayaçları aktif değil. Upstash Redis env var'larını eklemen gerekiyor:
+            </p>
+            <ol className="font-sans text-sm text-soft-black space-y-1 list-decimal list-inside">
+              <li>
+                <a href="https://console.upstash.com" target="_blank" rel="noopener" className="text-accent underline">
+                  console.upstash.com
+                </a>'a git → ücretsiz Redis database oluştur
+              </li>
+              <li>REST URL ve REST Token'ı kopyala</li>
+              <li>
+                Vercel → Project → Settings → Environment Variables'e ekle:
+                <code className="block mt-1 px-2 py-1 bg-ink/5 font-mono text-xs">
+                  UPSTASH_REDIS_REST_URL=https://...<br />
+                  UPSTASH_REDIS_REST_TOKEN=...
+                </code>
+              </li>
+              <li>Deploy → ziyaretçi sayacı otomatik çalışır</li>
+            </ol>
+          </div>
+        )}
+      </section>
 
       {!data ? (
         <p className="font-serif text-warm-gray italic">
@@ -269,7 +353,7 @@ function Stat({
       <div
         className={`font-display text-3xl font-bold ${highlight ? "text-accent" : "text-ink"}`}
       >
-        {value ?? 0}
+        {new Intl.NumberFormat("tr-TR").format(value ?? 0)}
       </div>
     </div>
   );
