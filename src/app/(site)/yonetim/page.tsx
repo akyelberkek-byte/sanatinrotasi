@@ -205,9 +205,23 @@ export default async function AdminDashboardPage() {
 
             <p className="font-sans text-[0.6rem] text-warm-gray mt-3">
               Bot'lar ve /yonetim, /studio, /giris, /kayit sayfaları sayılmaz. Detaylı analitik için{" "}
-              <a href="https://vercel.com/dashboard" target="_blank" rel="noopener" className="text-accent underline">
+              <a
+                href="https://vercel.com/akyelberke-9029s-projects/sanatinrotasi-site/analytics"
+                target="_blank"
+                rel="noopener"
+                className="text-accent underline"
+              >
                 Vercel Analytics
-              </a>'e bak.
+              </a>
+              {" · "}
+              <a
+                href="https://console.upstash.com"
+                target="_blank"
+                rel="noopener"
+                className="text-accent underline"
+              >
+                Upstash Console
+              </a>
             </p>
           </>
         ) : (
