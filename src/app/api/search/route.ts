@@ -32,7 +32,7 @@ const SEARCH_QUERY = groq`{
     slug,
     excerpt,
     publishedAt,
-    mainImage,
+    "mainImage": coalesce(mainImage, seo.ogImage),
     author-> { name },
     category-> { title, slug }
   },

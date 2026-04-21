@@ -70,6 +70,9 @@ export const FOUNDER_QUERY = groq`
 `;
 
 // Articles
+// displayImage: mainImage öncelikli, yoksa SEO ogImage fallback
+// → Ela "Ana Görsel"i boş bırakıp sadece "Sosyal Medya Görseli" doldurunca
+//   yazı kartlarında yine görsel görünür.
 export const ARTICLES_QUERY = groq`
   *[_type == "article"] | order(publishedAt desc) [0...$limit] {
     _id,
@@ -77,7 +80,7 @@ export const ARTICLES_QUERY = groq`
     slug,
     publishedAt,
     excerpt,
-    mainImage,
+    "mainImage": coalesce(mainImage, seo.ogImage),
     featured,
     author-> { name, slug, image },
     category-> { title, slug, color }
@@ -96,7 +99,7 @@ export const ARTICLES_AND_ROUTES_QUERY = groq`
     slug,
     "publishedAt": coalesce(publishedAt, _createdAt),
     "excerpt": coalesce(excerpt, subtitle),
-    mainImage,
+    "mainImage": coalesce(mainImage, seo.ogImage),
     featured,
     _type == "article" => {
       author-> { name, slug, image },
@@ -120,7 +123,7 @@ export const FEATURED_ARTICLES_QUERY = groq`
     slug,
     publishedAt,
     excerpt,
-    mainImage,
+    "mainImage": coalesce(mainImage, seo.ogImage),
     author-> { name, slug },
     category-> { title, slug, color }
   }
@@ -171,7 +174,7 @@ export const ARTICLES_BY_CATEGORY_QUERY = groq`
     slug,
     publishedAt,
     excerpt,
-    mainImage,
+    "mainImage": coalesce(mainImage, seo.ogImage),
     author-> { name, slug },
     category-> { title, slug, color }
   }
@@ -186,7 +189,7 @@ export const RELATED_ARTICLES_QUERY = groq`
     slug,
     publishedAt,
     excerpt,
-    mainImage,
+    "mainImage": coalesce(mainImage, seo.ogImage),
     author-> { name, slug },
     category-> { title, slug, color }
   }
@@ -214,7 +217,7 @@ export const EVENTS_QUERY = groq`
     date,
     endDate,
     location,
-    mainImage,
+    "mainImage": coalesce(mainImage, seo.ogImage),
     price,
     featured
   }
@@ -256,7 +259,7 @@ export const ROUTES_QUERY = groq`
     slug,
     subtitle,
     city,
-    mainImage,
+    "mainImage": coalesce(mainImage, seo.ogImage),
     duration,
     difficulty,
     featured,
@@ -306,7 +309,7 @@ export const ARTICLES_BY_IDS_QUERY = groq`
     slug,
     publishedAt,
     excerpt,
-    mainImage,
+    "mainImage": coalesce(mainImage, seo.ogImage),
     author-> { name, slug },
     category-> { title, slug, color }
   }
