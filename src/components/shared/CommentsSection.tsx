@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import AuthAwareHint from "./AuthAwareHint";
 
 type Comment = {
   _id: string;
@@ -239,7 +240,8 @@ export default function CommentsSection({
           <p className="font-serif text-base text-soft-black mb-3">
             Yorum yapabilmek için giriş yapmalısın.
           </p>
-          <div className="flex gap-3 justify-center">
+          <AuthAwareHint />
+          <div className="flex gap-3 justify-center mt-4">
             <Link
               href="/giris"
               className="px-5 py-2 border border-ink text-ink font-sans text-xs uppercase tracking-[0.2em] hover:bg-ink hover:text-cream transition-colors"

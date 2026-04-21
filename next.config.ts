@@ -6,13 +6,16 @@ import type { NextConfig } from "next";
 // (Google Fonts ve Clerk script'leri inline style/eval kullanıyor).
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://clerk.sanatinrotasi.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://vercel.live",
+  // Clerk: dev + prod FAPI + hosted UI + stable wildcard
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://*.accounts.dev https://clerk.sanatinrotasi.com https://accounts.sanatinrotasi.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://vercel.live",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://cdn.sanity.io https://img.clerk.com https://images.clerk.dev https://*.clerk.com https://*.vercel-insights.com",
   "media-src 'self' https://cdn.sanity.io",
-  "connect-src 'self' https://cdn.sanity.io https://*.api.sanity.io https://*.apicdn.sanity.io https://*.clerk.accounts.dev https://*.clerk.com https://clerk.sanatinrotasi.com https://api.resend.com https://vitals.vercel-insights.com https://*.vercel-insights.com https://vercel.live wss://*.pusher.com",
-  "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://youtube.com https://challenges.cloudflare.com https://*.clerk.accounts.dev https://*.clerk.com https://vercel.live",
+  // Clerk prod ek: clerk-telemetry.com (user behavior telemetry), accounts.sanatinrotasi.com (prod hosted UI), *.accounts.dev wildcard
+  "connect-src 'self' https://cdn.sanity.io https://*.api.sanity.io https://*.apicdn.sanity.io https://*.clerk.accounts.dev https://*.clerk.com https://*.accounts.dev https://clerk.sanatinrotasi.com https://accounts.sanatinrotasi.com https://clerk-telemetry.com https://*.clerk-telemetry.com https://api.resend.com https://vitals.vercel-insights.com https://*.vercel-insights.com https://vercel.live wss://*.pusher.com",
+  // Clerk prod CAPTCHA / 2FA bazen iframe kullanabiliyor
+  "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://youtube.com https://challenges.cloudflare.com https://*.clerk.accounts.dev https://*.clerk.com https://*.accounts.dev https://clerk.sanatinrotasi.com https://accounts.sanatinrotasi.com https://vercel.live",
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
