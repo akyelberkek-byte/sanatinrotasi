@@ -1,5 +1,4 @@
-import { client } from "@/sanity/client";
-import { ROUTE_BY_SLUG_QUERY } from "@/sanity/queries";
+import { findRouteBySlug } from "@/sanity/lib/findRoute";
 import { urlFor } from "@/sanity/image";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,7 +20,7 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const route = await client.fetch(ROUTE_BY_SLUG_QUERY, { slug });
+  const route = await findRouteBySlug(slug);
   if (!route) return {};
 
   const title = route.seo?.metaTitle || route.title;
@@ -59,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function RoutePage({ params }: Props) {
   const { slug } = await params;
-  const route = await client.fetch(ROUTE_BY_SLUG_QUERY, { slug });
+  const route = await findRouteBySlug(slug);
   if (!route) notFound();
 
   const readMinutes = readingTimeMinutes(route.description);
@@ -177,6 +176,20 @@ export default async function RoutePage({ params }: Props) {
             </span>
           ))}
         </div>
+      )}
+
+      {/* Sosyal Medya Görseli — rotanın sonunda (her zaman, SEO'da yüklenmişse) */}
+      {route.seo?.ogImage?.asset && (
+        <figure className="mt-12 pt-8 border-t border-ink/10">
+          <Image
+            src={urlFor(route.seo.ogImage).width(1600).fit("max").auto("format").url()}
+            alt={route.title}
+            width={1600}
+            height={840}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
+            className="w-full h-auto"
+          />
+        </figure>
       )}
 
       {/* Schema.org JSON-LD — Google rich results için TouristTrip/Article hibrit */}

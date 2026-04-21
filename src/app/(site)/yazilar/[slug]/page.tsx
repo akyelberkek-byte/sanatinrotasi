@@ -193,23 +193,20 @@ export default async function ArticlePage({ params }: Props) {
         {article.body && <PortableRenderer value={article.body} />}
       </div>
 
-      {/* Sosyal Medya Görseli — yazının sonunda.
-          Sadece Ana Görsel VARSA ve SEO görseli ondan farklıysa göster;
-          Ana Görsel yoksa SEO zaten hero'da gösterildi (duplicate olmasın). */}
-      {article.mainImage?.asset &&
-        article.seo?.ogImage?.asset &&
-        article.seo.ogImage.asset._ref !== article.mainImage.asset._ref && (
-          <figure className="mt-12 pt-8 border-t border-ink/10">
-            <Image
-              src={urlFor(article.seo.ogImage).width(1600).fit("max").auto("format").url()}
-              alt={article.title}
-              width={1600}
-              height={840}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
-              className="w-full h-auto"
-            />
-          </figure>
-        )}
+      {/* Sosyal Medya Görseli — yazının sonunda, her zaman (SEO'da yüklenmişse).
+          Ana Görselle aynı olsa bile gösterilir (Ela'nın isteği: her zaman son). */}
+      {article.seo?.ogImage?.asset && (
+        <figure className="mt-12 pt-8 border-t border-ink/10">
+          <Image
+            src={urlFor(article.seo.ogImage).width(1600).fit("max").auto("format").url()}
+            alt={article.title}
+            width={1600}
+            height={840}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
+            className="w-full h-auto"
+          />
+        </figure>
+      )}
 
       {/* Tags */}
       {article.tags && article.tags.length > 0 && (

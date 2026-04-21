@@ -144,6 +144,20 @@ export default async function EventPage({ params }: Props) {
           <PortableRenderer value={event.description} />
         </div>
       )}
+
+      {/* Sosyal Medya Görseli — etkinliğin sonunda (her zaman, SEO'da yüklenmişse) */}
+      {event.seo?.ogImage?.asset && (
+        <figure className="mt-12 pt-8 border-t border-ink/10">
+          <Image
+            src={urlFor(event.seo.ogImage).width(1600).fit("max").auto("format").url()}
+            alt={event.title}
+            width={1600}
+            height={840}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
+            className="w-full h-auto"
+          />
+        </figure>
+      )}
     </article>
   );
 }
