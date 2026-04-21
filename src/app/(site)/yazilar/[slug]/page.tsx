@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? article.mainImage
       : null;
   const ogImageUrl = ogImageAsset
-    ? urlFor(ogImageAsset).width(1200).height(630).url()
+    ? urlFor(ogImageAsset).width(1200).height(630).fit("crop").format("jpg").quality(82).url()
     : undefined;
 
   return {
@@ -290,9 +290,9 @@ export default async function ArticlePage({ params }: Props) {
               url: "https://sanatinrotasi.com",
             },
             image: article.seo?.ogImage?.asset
-              ? urlFor(article.seo.ogImage).width(1200).height(630).url()
+              ? urlFor(article.seo.ogImage).width(1200).height(630).fit("crop").format("jpg").quality(82).url()
               : article.mainImage?.asset
-                ? urlFor(article.mainImage).width(1200).height(630).url()
+                ? urlFor(article.mainImage).width(1200).height(630).fit("crop").format("jpg").quality(82).url()
                 : undefined,
             mainEntityOfPage: {
               "@type": "WebPage",

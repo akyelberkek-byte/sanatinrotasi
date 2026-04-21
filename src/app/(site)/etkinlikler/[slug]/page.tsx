@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? event.mainImage
       : null;
   const ogImageUrl = ogImageAsset
-    ? urlFor(ogImageAsset).width(1200).height(630).url()
+    ? urlFor(ogImageAsset).width(1200).height(630).fit("crop").format("jpg").quality(82).url()
     : undefined;
 
   return {
