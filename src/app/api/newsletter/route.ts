@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
     //    güvenlidir (Sanity tarafında atomic).
     let isNewSubscriber = false;
     let existingDoc: { _id: string; active?: boolean } | null = null;
+    const requestStartMs = Date.now();
     try {
       const result = await writeClient.createIfNotExists({
         _id: docId,
@@ -85,13 +86,18 @@ export async function POST(request: NextRequest) {
         active: true,
         source: "site",
       });
-      // createIfNotExists eğer YENI yarattıysa subscribedAt yeni timestamp,
-      // ZATEN VARSA eski subscribedAt döner. Birkaç saniye farkla "yeni" sayarız.
-      const createdAt = result?.subscribedAt as string | undefined;
-      if (createdAt) {
-        const ageMs = Date.now() - new Date(createdAt).getTime();
-        isNewSubscriber = ageMs < 5000; // 5sn içinde yaratılmış → yeni
+      // Sanity'nin atadığı _createdAt — yeni doc için tam ŞIMDI, eski doc için
+      // orijinal kayıt zamanı. Bu request başlangıcı ile kıyaslarsak yeni/eski
+      // tespit ederiz. Tight 2 saniye window — sadece bizim atomic create'imiz
+      // sırasında "yeni" sayılır.
+      const sanityCreatedAt = (result as { _createdAt?: string })._createdAt;
+      if (sanityCreatedAt) {
+        const docCreatedMs = new Date(sanityCreatedAt).getTime();
+        // Sanity'nin doc create timestamp'i request'imizden ÖNCE veya sırasında
+        // olabilir (network gecikmesi). Tolerans: 2sn.
+        isNewSubscriber = docCreatedMs >= requestStartMs - 2000;
       } else {
+        // _createdAt yoksa — yeni doc varsayalım
         isNewSubscriber = true;
       }
       existingDoc = {
