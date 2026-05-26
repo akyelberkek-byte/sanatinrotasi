@@ -44,6 +44,18 @@ export const structure: StructureResolver = (S) =>
 
       S.divider(),
 
+      // Topluluk
+      S.listItem()
+        .title("Bülten Aboneleri")
+        .schemaType("newsletterSubscriber")
+        .child(
+          S.documentTypeList("newsletterSubscriber")
+            .title("Bülten Aboneleri")
+            .defaultOrdering([{ field: "subscribedAt", direction: "desc" }])
+        ),
+
+      S.divider(),
+
       // Yönetim
       S.listItem()
         .title("Yazarlar")
