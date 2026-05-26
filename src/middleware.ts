@@ -3,9 +3,12 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Korunan rotalar — sadece giriş yapan kullanıcılar
+// /yonetim middleware'den çıkarıldı çünkü Clerk auth.protect() bot/crawler
+// için 404 dönüyordu ("protect-rewrite" davranışı). Sayfa kendi auth
+// check'ini yapıyor: giriş yoksa "Giriş Gerekli" CTA, admin değilse
+// "Yetkisiz" mesajı gösterir.
 const isProtectedRoute = createRouteMatcher([
   "/profil(.*)",
-  "/yonetim(.*)",
   "/kaydettiklerim(.*)",
 ]);
 

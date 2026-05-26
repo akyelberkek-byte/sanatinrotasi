@@ -30,8 +30,13 @@ export default function NewsletterForm({
       });
 
       if (res.ok) {
+        const data = await res.json().catch(() => ({}));
         setStatus("success");
-        setMessage("Teşekkürler! Rotaya dahil oldunuz.");
+        setMessage(
+          data?.alreadySubscribed
+            ? "Bu e-posta zaten kayıtlı. Sizi listeden eklemeye gerek yok."
+            : "Teşekkürler! Rotaya dahil oldunuz."
+        );
         setEmail("");
       } else {
         setStatus("error");

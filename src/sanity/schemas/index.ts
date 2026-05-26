@@ -3,6 +3,7 @@ import { author } from "./author";
 import { category } from "./category";
 import { comment } from "./comment";
 import { event } from "./event";
+import { newsletterSubscriber } from "./newsletterSubscriber";
 import { page } from "./page";
 import { route } from "./route";
 import { siteSettings } from "./siteSettings";
@@ -17,6 +18,7 @@ export const schemaTypes = [
   category,
   comment,
   event,
+  newsletterSubscriber,
   page,
   route,
   siteSettings,
