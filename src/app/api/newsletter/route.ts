@@ -10,9 +10,10 @@ import { createHash } from "crypto";
 // Email'den deterministic Sanity document ID üret.
 // Sanity'de aynı _id ile create denemesi atomic biçimde unique olur
 // → eventual consistency window'unda race condition'a karşı korur.
+// NOT: ID'de dot (.) kullanılamaz (Sanity "drafts.X" prefix'i için ayrılmış).
 function emailToDocId(email: string): string {
-  const hash = createHash("sha256").update(email).digest("hex").slice(0, 24);
-  return `newsletterSubscriber.${hash}`;
+  const hash = createHash("sha256").update(email).digest("hex").slice(0, 32);
+  return `subscriber-${hash}`;
 }
 
 const resend = new Resend(process.env.RESEND_API_KEY);
