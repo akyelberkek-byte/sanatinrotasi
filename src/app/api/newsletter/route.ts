@@ -5,6 +5,15 @@ import { captureError } from "@/lib/observability";
 import { writeClient } from "@/sanity/writeClient";
 import { client } from "@/sanity/client";
 import { groq } from "next-sanity";
+import { createHash } from "crypto";
+
+// Email'den deterministic Sanity document ID üret.
+// Sanity'de aynı _id ile create denemesi atomic biçimde unique olur
+// → eventual consistency window'unda race condition'a karşı korur.
+function emailToDocId(email: string): string {
+  const hash = createHash("sha256").update(email).digest("hex").slice(0, 24);
+  return `newsletterSubscriber.${hash}`;
+}
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -57,27 +66,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Geçersiz e-posta" }, { status: 400 });
     }
 
-    // 1) Duplicate kontrolü — bu email zaten kayıtlı mı?
-    let existing: { _id: string; active?: boolean } | null = null;
+    // Deterministic doc ID — aynı email aynı ID üretir
+    const docId = emailToDocId(normalizedEmail);
+
+    // 1) Atomic createIfNotExists — Sanity unique constraint sağlar.
+    //    Sanity'ye gönderdiğimiz ID zaten varsa Sanity hiçbir şey yapmaz,
+    //    eski document döner. createIfNotExists eventual consistency'ye karşı
+    //    güvenlidir (Sanity tarafında atomic).
+    let isNewSubscriber = false;
+    let existingDoc: { _id: string; active?: boolean } | null = null;
     try {
-      existing = await client.fetch(
-        EXISTING_SUBSCRIBER_QUERY,
-        { email: normalizedEmail },
-        { cache: "no-store" }
-      );
+      const result = await writeClient.createIfNotExists({
+        _id: docId,
+        _type: "newsletterSubscriber",
+        email: normalizedEmail,
+        subscribedAt: new Date().toISOString(),
+        active: true,
+        source: "site",
+      });
+      // createIfNotExists eğer YENI yarattıysa subscribedAt yeni timestamp,
+      // ZATEN VARSA eski subscribedAt döner. Birkaç saniye farkla "yeni" sayarız.
+      const createdAt = result?.subscribedAt as string | undefined;
+      if (createdAt) {
+        const ageMs = Date.now() - new Date(createdAt).getTime();
+        isNewSubscriber = ageMs < 5000; // 5sn içinde yaratılmış → yeni
+      } else {
+        isNewSubscriber = true;
+      }
+      existingDoc = {
+        _id: result._id,
+        active: (result as { active?: boolean }).active,
+      };
     } catch (e) {
-      // Sanity okuma hatası: idempotent davranamayız ama abone olmayı engellemeyelim.
-      captureError(e, { route: "/api/newsletter", phase: "dedupe check" });
+      // Sanity yazma hatası — fallback olarak EXISTING_SUBSCRIBER_QUERY ile oku
+      captureError(e, { route: "/api/newsletter", phase: "createIfNotExists" });
+      try {
+        existingDoc = await client.fetch(
+          EXISTING_SUBSCRIBER_QUERY,
+          { email: normalizedEmail },
+          { cache: "no-store" }
+        );
+      } catch {
+        /* ignore */
+      }
     }
 
-    if (existing) {
-      // Tekrar tıklayan kullanıcıya başarılı dön ama mail GÖNDERMİYORUZ
-      // (spam etmeyelim, Resend quota'sını yememe).
-      // Eğer eski abone deaktif idiyse tekrar aktif et.
-      if (existing.active === false) {
+    if (!isNewSubscriber) {
+      // Tekrar tıklayan kullanıcıya başarılı dön ama mail GÖNDERMİYORUZ.
+      // Deaktif idiyse tekrar aktif et.
+      if (existingDoc && existingDoc.active === false) {
         try {
           await writeClient
-            .patch(existing._id)
+            .patch(existingDoc._id)
             .set({ active: true })
             .commit();
         } catch (e) {
@@ -88,21 +128,6 @@ export async function POST(request: NextRequest) {
         success: true,
         alreadySubscribed: true,
       });
-    }
-
-    // 2) Sanity'ye kaydet (yeni abone)
-    try {
-      await writeClient.create({
-        _type: "newsletterSubscriber",
-        email: normalizedEmail,
-        subscribedAt: new Date().toISOString(),
-        active: true,
-        source: "site",
-      });
-    } catch (e) {
-      // Sanity'ye yazılamadıysa: kullanıcının mail almasını engelleme,
-      // sadece observability'e logla.
-      captureError(e, { route: "/api/newsletter", phase: "save subscriber" });
     }
 
     // 3) Hoşgeldin maili + admin bildirimi (paralel)
