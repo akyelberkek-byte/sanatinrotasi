@@ -16,6 +16,7 @@ import EventCard from "@/components/shared/EventCard";
 import RouteCard from "@/components/shared/RouteCard";
 import SectionLabel from "@/components/shared/SectionLabel";
 import NewsletterForm from "@/components/shared/NewsletterForm";
+import ArtQuote from "@/components/shared/ArtQuote";
 import Ornament from "@/components/shared/Ornament";
 
 export const revalidate = 60;
@@ -68,6 +69,8 @@ export default async function HomePage() {
             {settings.heroDescription}
           </p>
         )}
+        {/* Sanatın Sözü — her yüklemede farklı rastgele alıntı */}
+        <ArtQuote quotes={settings?.artQuotes || []} />
       </header>
 
       {/* Editorial Section — Manifesto + Founder */}

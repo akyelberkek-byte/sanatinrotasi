@@ -16,6 +16,7 @@ export const siteSettings = defineType({
     { name: "moderation", title: "Moderasyon" },
     { name: "pages", title: "Sayfa Başlıkları" },
     { name: "empty", title: "Boş Durum Metinleri" },
+    { name: "quotes", title: "Sanatın Sözü (Rastgele Alıntı)" },
   ],
   fields: [
     // GENEL
@@ -334,6 +335,39 @@ export const siteSettings = defineType({
         "Açıksa: Gelen yorumlar sen onaylayana kadar sitede görünmez. Kapalıysa: Otomatik yayımlanır.",
       initialValue: false,
       group: "moderation",
+    }),
+
+    // SANATIN SÖZÜ — Hero altında rastgele bir tane gösterilir
+    defineField({
+      name: "artQuotes",
+      title: "Sanatın Sözü Listesi",
+      type: "array",
+      group: "quotes",
+      description:
+        "Ana sayfada hero altında rastgele bir alıntı görünür. Her sayfa yüklenmesinde farklı olabilir.",
+      of: [
+        {
+          type: "object",
+          fields: [
+            defineField({
+              name: "text",
+              title: "Alıntı",
+              type: "text",
+              rows: 2,
+              validation: (r) => r.required().max(180),
+            }),
+            defineField({
+              name: "author",
+              title: "Söyleyen / Yazar",
+              type: "string",
+              description: "Opsiyonel. Örn: 'Pablo Picasso'",
+            }),
+          ],
+          preview: {
+            select: { title: "text", subtitle: "author" },
+          },
+        },
+      ],
     }),
 
     // SOSYAL MEDYA

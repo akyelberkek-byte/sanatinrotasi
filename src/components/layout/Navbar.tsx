@@ -47,6 +47,7 @@ function AuthButtons() {
             elements: { avatarBox: "w-8 h-8" },
           }}
         />
+        <SanatiniTanitButton />
       </div>
     );
   }
@@ -63,7 +64,23 @@ function AuthButtons() {
           Kayıt Ol
         </button>
       </SignUpButton>
+      <SanatiniTanitButton />
     </div>
+  );
+}
+
+/**
+ * Sanatını Tanıt CTA — logo rengiyle dolu (accent), iletişime yönlendirir.
+ * Giriş/Kayıt'ın sağında, mobile menüde en altta.
+ */
+function SanatiniTanitButton() {
+  return (
+    <Link
+      href="/iletisim"
+      className="font-sans text-[0.65rem] uppercase tracking-[0.2em] px-4 py-2 bg-accent text-cream hover:bg-accent-dark transition-colors whitespace-nowrap"
+    >
+      Sanatını Tanıt
+    </Link>
   );
 }
 
@@ -90,6 +107,7 @@ function FallbackAuthButtons() {
       >
         Kayıt Ol
       </Link>
+      <SanatiniTanitButton />
     </div>
   );
 }

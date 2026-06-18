@@ -33,11 +33,13 @@ const libre = Libre_Franklin({
   display: "swap",
 });
 
-// Urbanist — hero başlığı için (geometric sans-serif, "Urbane" benzeri free font)
+// Urbanist — site genelinde tek font (geometric sans-serif, "Urbane" benzeri).
+// Tüm weight'ler dahil (300-900) çünkü navbar/manifesto/heading/UI hepsi
+// bu fontu kullanıyor — farklı yerlerin farklı weight ihtiyacı var.
 const urbanist = Urbanist({
   variable: "--font-urbane",
   subsets: ["latin"],
-  weight: ["700", "800", "900"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 

@@ -17,12 +17,13 @@ export default function Footer({
   udemyUrl,
   twitterUrl,
 }: FooterProps) {
+  // X (Twitter) footer'dan kaldırıldı — kullanıcı talebi.
+  void twitterUrl;
   const visibleLinks: { label: string; url?: string }[] = [
     { label: "Instagram", url: instagramUrl },
     { label: "YouTube", url: youtubeUrl },
     { label: "Pinterest", url: pinterestUrl },
     { label: "Udemy", url: udemyUrl },
-    { label: "X", url: twitterUrl },
   ];
 
   return (

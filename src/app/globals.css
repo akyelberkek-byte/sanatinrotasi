@@ -4,14 +4,27 @@
   --color-ink: #1a1a18;
   --color-cream: #f5f0e8;
   --color-warm-gray: #b8b0a2;
-  --color-accent: #c45d3e;
-  --color-accent-dark: #a34830;
+  /* Accent — logonun kırmızısı (#ee413d). Önceden turuncuydu (#c45d3e),
+     site genelinde "turuncu" yerine logo rengi kullanılıyor. */
+  --color-accent: #ee413d;
+  --color-accent-dark: #c8342f;
   --color-paper: #ebe6db;
   --color-soft-black: #2d2b28;
 
-  --font-display: "Playfair Display", serif;
-  --font-serif: "Cormorant Garamond", serif;
-  --font-sans: "Libre Franklin", sans-serif;
+  /* Tüm font variable'ları Urbanist'e bağlandı — site genelinde tek font.
+     Tailwind className değişikliği yapılmıyor (font-display/font-serif/font-sans
+     hepsi aynı font'u gösteriyor). */
+  --font-display: var(--font-urbane), "Urbanist", sans-serif;
+  --font-serif: var(--font-urbane), "Urbanist", sans-serif;
+  --font-sans: var(--font-urbane), "Urbanist", sans-serif;
+}
+
+/* İtalik tamamen kaldırıldı — Tailwind `italic` class ve em/i tag'leri normal'e çekildi */
+.italic,
+em,
+i,
+[class*="italic"] {
+  font-style: normal !important;
 }
 
 /* Base styles */
