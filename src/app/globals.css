@@ -39,19 +39,35 @@ body {
      en güçlü yerden zorlayıcı. */
   font-family: var(--font-urbane), "Urbanist", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  /* TÜM yazılar — sağa ve sola hizala (justify) + Türkçe için hyphenation.
-     Tailwind text-center / text-left / text-right class'ları daha spesifik
-     olduğu için merkezlenmiş başlıklar (hero, footer vb.) korunur. */
-  text-align: justify;
-  text-justify: inter-word;
-  hyphens: auto;
-  -webkit-hyphens: auto;
-  -moz-hyphens: auto;
+  /* Default hizalama: sol (UI elemanları, butonlar, kısa metinler için doğal).
+     Justify SADECE yazı/sayfa body'sine (prose alanlarına) uygulanır →
+     uzun Türkçe kelimelerde 'isolated word' bug'ı oluşmaz. */
 }
 
 /* Tüm elementler — body font'unu zorla (defensive override) */
 * {
   font-family: inherit;
+}
+
+/* SADECE PROSE alanları için justify — yazı body, page body, portable text.
+   Tek kelime alt satıra düşse bile yumuşak görünüyor çünkü inter-word yerine
+   browser default (auto) kullanılıyor + hyphens manuel (otomatik tireleme yok).
+   Bu, uzun Türkçe kelimelerin satır sonunda doğal akmasına izin verir. */
+.portable-text,
+.portable-text p,
+.portable-text li,
+article .portable-text,
+.prose,
+.prose p {
+  text-align: justify;
+  text-justify: auto;
+  hyphens: manual;
+  -webkit-hyphens: manual;
+  -moz-hyphens: manual;
+  /* Aşırı geniş kelime aralığı oluşmasın → daha doğal akış */
+  word-spacing: normal;
+  /* Paragrafın son satırı sağa yapışıp eksik gibi görünmesin (start = sol başla) */
+  text-align-last: start;
 }
 
 /* Selection */
