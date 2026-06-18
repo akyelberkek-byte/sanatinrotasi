@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import SectionLabel from "@/components/shared/SectionLabel";
 import PortableRenderer from "@/components/shared/PortableRenderer";
+import RouteMapClient from "@/components/shared/RouteMapClient";
 import { readingTimeMinutes } from "@/lib/readingTime";
 import type { Metadata } from "next";
 
@@ -119,6 +120,11 @@ export default async function RoutePage({ params }: Props) {
         <div className="portable-text mb-12 animate-fade-up stagger-2">
           <PortableRenderer value={route.description} />
         </div>
+      )}
+
+      {/* İnteraktif harita — durakların konumlarına göre */}
+      {Array.isArray(route.stops) && route.stops.length > 0 && (
+        <RouteMapClient stops={route.stops} city={route.city} />
       )}
 
       {/* Stops */}
