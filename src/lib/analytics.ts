@@ -69,7 +69,11 @@ export async function trackPageView(path?: string): Promise<void> {
       // Sadece uzunluğu makul ve güvenli path'leri kaydet
       const cleanPath = path.slice(0, 120).replace(/[^\w\-/.]/g, "");
       if (cleanPath) {
-        await redis.incr(`pv:path:${cleanPath}:${today}`);
+        await Promise.all([
+          redis.incr(`pv:path:${cleanPath}:${today}`),
+          // Top paths sorted set — sonradan en çok okunanları çıkarmak için
+          redis.zincrby("pv:top:paths", 1, cleanPath),
+        ]);
       }
     }
   } catch {
@@ -85,6 +89,8 @@ export type AnalyticsStats = {
   last7Days: number;
   last30Days: number;
   thisMonth: number;
+  averageDaily: number;
+  bestDay: { date: string; count: number } | null;
   daily: { date: string; count: number }[];
   topPaths: { path: string; count: number }[];
 };
@@ -112,9 +118,14 @@ export async function getAnalyticsStats(): Promise<AnalyticsStats | null> {
   }
 
   try {
-    const [total, thisMonthCount, ...dayCounts] = await Promise.all([
+    const [total, thisMonthCount, topRaw, ...dayCounts] = await Promise.all([
       redis.get<number>("pv:total"),
       redis.get<number>(`pv:month:${month}`),
+      // En çok okunan 15 path — sorted set'ten DESC sıra
+      redis.zrange<string[]>("pv:top:paths", 0, 14, {
+        rev: true,
+        withScores: true,
+      }),
       ...dayKeys.map((k) => redis!.get<number>(k)),
     ]);
 
@@ -130,6 +141,28 @@ export async function getAnalyticsStats(): Promise<AnalyticsStats | null> {
     const yesterdayCount =
       daily.find((d) => d.date === yesterdayKey)?.count ?? 0;
 
+    // Ortalama günlük — son 30 gün
+    const activeDays = daily.filter((d) => d.count > 0).length || 30;
+    const averageDaily = Math.round(last30Days / Math.max(1, activeDays));
+
+    // En iyi gün — son 30 günde en çok ziyaretçi alan gün
+    const bestDay = daily.reduce<{ date: string; count: number } | null>(
+      (best, d) => (best === null || d.count > best.count ? d : best),
+      null,
+    );
+
+    // Top paths — sorted set [path1, score1, path2, score2, ...] formatında döner
+    const topPaths: { path: string; count: number }[] = [];
+    if (Array.isArray(topRaw)) {
+      for (let i = 0; i < topRaw.length; i += 2) {
+        const path = String(topRaw[i] ?? "");
+        const count = Number(topRaw[i + 1] ?? 0);
+        if (path && count > 0) {
+          topPaths.push({ path, count });
+        }
+      }
+    }
+
     return {
       enabled: true,
       total: Number(total ?? 0),
@@ -138,8 +171,10 @@ export async function getAnalyticsStats(): Promise<AnalyticsStats | null> {
       last7Days,
       last30Days,
       thisMonth: Number(thisMonthCount ?? 0),
+      averageDaily,
+      bestDay: bestDay && bestDay.count > 0 ? bestDay : null,
       daily,
-      topPaths: [], // top paths ayrı query olur, performans için şimdilik boş
+      topPaths,
     };
   } catch {
     return null;

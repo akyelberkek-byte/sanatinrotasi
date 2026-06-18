@@ -20,6 +20,9 @@ const ADMIN_DASHBOARD_QUERY = groq`{
   "totalCategories": count(*[_type == "category"]),
   "totalComments": count(*[_type == "comment"]),
   "pendingComments": count(*[_type == "comment" && approved == false]),
+  "commentsThisMonth": count(*[_type == "comment" && createdAt >= $monthStart]),
+  "newsletterSubscribers": count(*[_type == "newsletterSubscriber" && active == true]),
+  "newslettersThisMonth": count(*[_type == "newsletterSubscriber" && subscribedAt >= $monthStart]),
   "latestComments": *[_type == "comment"] | order(createdAt desc) [0...5] {
     _id,
     authorName,
@@ -35,6 +38,11 @@ const ADMIN_DASHBOARD_QUERY = groq`{
     slug,
     publishedAt,
     _updatedAt,
+    "categoryTitle": category->title
+  },
+  "allArticles": *[_type == "article" && defined(slug.current)] {
+    title,
+    "slug": slug.current,
     "categoryTitle": category->title
   }
 }`;
@@ -108,16 +116,94 @@ export default async function AdminDashboardPage() {
     );
   }
 
+  // Bu ayın başlangıcı (UTC) — Sanity query'de filter için
+  const now = new Date();
+  const monthStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+  ).toISOString();
+
   // 60s cache — admin paneli count/aggregation'ları Sanity quota'ya yüklenmesin
   const [data, analytics] = await Promise.all([
     client
-      .fetch(ADMIN_DASHBOARD_QUERY, {}, { next: { revalidate: 60 } })
+      .fetch(
+        ADMIN_DASHBOARD_QUERY,
+        { monthStart },
+        { next: { revalidate: 60 } },
+      )
       .catch(() => null),
     getAnalyticsStats().catch(() => null),
   ]);
 
   const fmtNumber = (n: number) =>
     new Intl.NumberFormat("tr-TR").format(n || 0);
+
+  // Top paths'i Sanity yazı başlıklarıyla eşleştir
+  const slugToArticle = new Map<
+    string,
+    { title: string; categoryTitle?: string }
+  >();
+  if (data?.allArticles) {
+    for (const a of data.allArticles as Array<{
+      slug: string;
+      title: string;
+      categoryTitle?: string;
+    }>) {
+      if (a.slug) slugToArticle.set(a.slug, a);
+    }
+  }
+
+  type TopRow = {
+    path: string;
+    count: number;
+    title?: string;
+    section?: string;
+    isArticle?: boolean;
+  };
+  const topRows: TopRow[] = (analytics?.topPaths || []).map((p) => {
+    const m = p.path.match(/^\/yazilar\/(.+)$/);
+    if (m) {
+      const slug = m[1];
+      const meta = slugToArticle.get(slug);
+      if (meta) {
+        return {
+          path: p.path,
+          count: p.count,
+          title: meta.title,
+          section: meta.categoryTitle || "Yazı",
+          isArticle: true,
+        };
+      }
+      return {
+        path: p.path,
+        count: p.count,
+        title: slug,
+        section: "Yazı",
+        isArticle: true,
+      };
+    }
+    // Static section path'leri için friendly isim
+    const friendlyMap: Record<string, string> = {
+      "/": "Ana Sayfa",
+      "/yazilar": "Yazılar (liste)",
+      "/rotalar": "Rotalar (liste)",
+      "/etkinlikler": "Etkinlikler (liste)",
+      "/roportajlar": "Röportajlar (liste)",
+      "/hakkinda": "Hakkında",
+      "/iletisim": "İletişim",
+      "/topluluk": "Topluluk",
+      "/ara": "Arama",
+    };
+    return {
+      path: p.path,
+      count: p.count,
+      title: friendlyMap[p.path] || p.path,
+      section: "Sayfa",
+    };
+  });
+  // Sadece yazılar listesi
+  const topArticles = topRows.filter((r) => r.isArticle).slice(0, 7);
+  // Diğer popüler sayfalar
+  const topPages = topRows.filter((r) => !r.isArticle).slice(0, 5);
 
   const fmtDate = (iso?: string) =>
     iso
@@ -165,13 +251,29 @@ export default async function AdminDashboardPage() {
         </h2>
         {analytics ? (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
               <Stat label="Bugün" value={analytics.today} highlight={analytics.today > 0} />
               <Stat label="Dün" value={analytics.yesterday} />
               <Stat label="Son 7 Gün" value={analytics.last7Days} />
               <Stat label="Son 30 Gün" value={analytics.last30Days} />
               <Stat label="Bu Ay" value={analytics.thisMonth} />
               <Stat label="Toplam" value={analytics.total} />
+              <Stat label="Ortalama / Gün" value={analytics.averageDaily} />
+              {analytics.bestDay ? (
+                <div className="border-2 border-ink p-4">
+                  <div className="font-sans text-[0.6rem] uppercase tracking-[0.2em] text-warm-gray mb-1">
+                    En İyi Gün
+                  </div>
+                  <div className="font-display text-3xl font-bold text-ink">
+                    {fmtNumber(analytics.bestDay.count)}
+                  </div>
+                  <div className="font-sans text-[0.55rem] text-warm-gray mt-1">
+                    {analytics.bestDay.date}
+                  </div>
+                </div>
+              ) : (
+                <Stat label="En İyi Gün" value={0} />
+              )}
             </div>
 
             {/* Mini 30 günlük bar grafik */}
@@ -202,6 +304,95 @@ export default async function AdminDashboardPage() {
                 </div>
               );
             })()}
+
+            {/* En Çok Okunan Yazılar + Popüler Sayfalar */}
+            {(topArticles.length > 0 || topPages.length > 0) && (
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* En çok okunan yazılar */}
+                <div className="p-4 border border-ink/10">
+                  <h3 className="font-sans text-[0.65rem] uppercase tracking-[0.25em] text-accent mb-3">
+                    En Çok Okunan Yazılar
+                  </h3>
+                  {topArticles.length === 0 ? (
+                    <p className="font-serif text-sm text-warm-gray italic">
+                      Henüz yazı görüntülemesi yok.
+                    </p>
+                  ) : (
+                    <ol className="space-y-2">
+                      {(() => {
+                        const maxCount = Math.max(
+                          ...topArticles.map((r) => r.count),
+                        );
+                        return topArticles.map((row, i) => {
+                          const widthPct = Math.max(
+                            8,
+                            Math.round((row.count / maxCount) * 100),
+                          );
+                          return (
+                            <li key={row.path}>
+                              <Link
+                                href={row.path}
+                                className="block group"
+                                title={`${fmtNumber(row.count)} görüntüleme`}
+                              >
+                                <div className="flex items-baseline justify-between gap-3 mb-1">
+                                  <span className="font-display text-sm font-bold text-ink group-hover:text-accent transition-colors line-clamp-2">
+                                    <span className="text-warm-gray font-sans text-[0.65rem] mr-2">
+                                      {String(i + 1).padStart(2, "0")}
+                                    </span>
+                                    {row.title}
+                                  </span>
+                                  <span className="font-sans text-[0.7rem] text-soft-black tabular-nums shrink-0">
+                                    {fmtNumber(row.count)}
+                                  </span>
+                                </div>
+                                <div className="relative h-[3px] bg-ink/5">
+                                  <div
+                                    className="absolute inset-y-0 left-0 bg-accent/70"
+                                    style={{ width: `${widthPct}%` }}
+                                  />
+                                </div>
+                              </Link>
+                            </li>
+                          );
+                        });
+                      })()}
+                    </ol>
+                  )}
+                </div>
+
+                {/* Popüler sayfalar (yazı dışı) */}
+                <div className="p-4 border border-ink/10">
+                  <h3 className="font-sans text-[0.65rem] uppercase tracking-[0.25em] text-accent mb-3">
+                    Popüler Sayfalar
+                  </h3>
+                  {topPages.length === 0 ? (
+                    <p className="font-serif text-sm text-warm-gray italic">
+                      Henüz veri yok.
+                    </p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {topPages.map((row) => (
+                        <li
+                          key={row.path}
+                          className="flex items-center justify-between gap-3 pb-2 border-b border-ink/5 last:border-0"
+                        >
+                          <Link
+                            href={row.path}
+                            className="font-serif text-sm text-soft-black hover:text-accent transition-colors truncate"
+                          >
+                            {row.title}
+                          </Link>
+                          <span className="font-sans text-[0.7rem] text-warm-gray tabular-nums">
+                            {fmtNumber(row.count)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
 
             <p className="font-sans text-[0.6rem] text-warm-gray mt-3">
               Bot'lar ve /yonetim, /studio, /giris, /kayit sayfaları sayılmaz. Detaylı analitik için{" "}
@@ -255,13 +446,23 @@ export default async function AdminDashboardPage() {
         </p>
       ) : (
         <>
-          {/* Stat cards */}
-          <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          {/* Content stat cards */}
+          <h2 className="font-display text-xl font-bold text-ink mb-4 pb-2 border-b-2 border-ink">
+            İçerik & Etkileşim
+          </h2>
+          <section className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-10">
             <Stat label="Yazılar" value={data.totalArticles} />
             <Stat label="Etkinlikler" value={data.totalEvents} />
             <Stat label="Rotalar" value={data.totalRoutes} />
             <Stat label="Kategoriler" value={data.totalCategories} />
+            <Stat label="Bülten Abonesi" value={data.newsletterSubscribers || 0} />
+            <Stat
+              label="Bu Ay Yeni Abone"
+              value={data.newslettersThisMonth || 0}
+              highlight={(data.newslettersThisMonth || 0) > 0}
+            />
             <Stat label="Toplam Yorum" value={data.totalComments} />
+            <Stat label="Bu Ay Yorum" value={data.commentsThisMonth || 0} />
             <Stat
               label="Onay Bekleyen"
               value={data.pendingComments}
