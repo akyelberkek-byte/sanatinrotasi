@@ -129,6 +129,25 @@ body {
 .stagger-4 { animation-delay: 0.4s; opacity: 0; }
 .stagger-5 { animation-delay: 0.5s; opacity: 0; }
 
+/* Hero dalga akışı — "rota"nın görsel metaforu */
+.hero-wave-fast {
+  animation: hero-wave-flow 14s linear infinite;
+}
+.hero-wave-slow {
+  animation: hero-wave-flow 24s linear infinite reverse;
+}
+@keyframes hero-wave-flow {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-wave-fast,
+  .hero-wave-slow {
+    animation: none;
+  }
+}
+
 /* Tıklama efekti — logodaki çizgi motifi */
 .click-dash {
   position: fixed;

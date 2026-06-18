@@ -17,6 +17,7 @@ import RouteCard from "@/components/shared/RouteCard";
 import SectionLabel from "@/components/shared/SectionLabel";
 import NewsletterForm from "@/components/shared/NewsletterForm";
 import ArtQuote from "@/components/shared/ArtQuote";
+import HeroWave from "@/components/shared/HeroWave";
 import Ornament from "@/components/shared/Ornament";
 
 export const revalidate = 60;
@@ -61,7 +62,9 @@ export default async function HomePage() {
             {settings?.heroHeadingItalic || "Rotası"}
           </span>
         </h1>
-        <p className="font-sans text-[0.7rem] uppercase tracking-[0.3em] text-warm-gray mt-6">
+        {/* Akan dalga — "rota" konseptinin görsel akışı */}
+        <HeroWave />
+        <p className="font-sans text-[0.7rem] uppercase tracking-[0.3em] text-warm-gray mt-2">
           {settings?.heroSubheading || "Türkiye'nin Sanat & Kültür Platformu"}
         </p>
         {settings?.heroDescription && (
