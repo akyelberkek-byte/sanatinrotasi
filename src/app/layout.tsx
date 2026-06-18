@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Cormorant_Garamond, Libre_Franklin, Urbanist } from "next/font/google";
+import { Urbanist } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { trTR } from "@clerk/localizations";
 import { Analytics } from "@vercel/analytics/next";
@@ -11,31 +11,11 @@ const hasClerkKeys = !!(
   process.env.CLERK_SECRET_KEY
 );
 
-const playfair = Playfair_Display({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["700", "900"],
-  display: "swap",
-});
-
-const cormorant = Cormorant_Garamond({
-  variable: "--font-serif",
-  subsets: ["latin"],
-  weight: ["300", "400"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
-
-const libre = Libre_Franklin({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  display: "swap",
-});
-
-// Urbanist — site genelinde tek font (geometric sans-serif, "Urbane" benzeri).
-// Tüm weight'ler dahil (300-900) çünkü navbar/manifesto/heading/UI hepsi
-// bu fontu kullanıyor — farklı yerlerin farklı weight ihtiyacı var.
+// Site genelinde TEK font — Urbanist.
+// Eski Playfair Display + Cormorant Garamond + Libre Franklin kaldırıldı,
+// site kimliği tek geometric sans'a indirildi (kullanıcı isteği).
+// 3 farklı CSS variable'a bağlanmıştır (display/serif/sans) ki mevcut
+// className'ler bozulmasın — hepsi aynı font'u gösterir.
 const urbanist = Urbanist({
   variable: "--font-urbane",
   subsets: ["latin"],
@@ -92,7 +72,7 @@ export default function RootLayout({
   return (
     <html
       lang="tr"
-      className={`${playfair.variable} ${cormorant.variable} ${libre.variable} ${urbanist.variable}`}
+      className={urbanist.variable}
     >
       <body>
         {hasClerkKeys ? (
