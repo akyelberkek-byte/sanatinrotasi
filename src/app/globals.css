@@ -35,8 +35,23 @@ html {
 body {
   background-color: var(--color-cream);
   color: var(--color-ink);
-  font-family: var(--font-sans);
+  /* TÜM yazılar — Urbanist. Hiçbir element farklı font kullanmasın diye
+     en güçlü yerden zorlayıcı. */
+  font-family: var(--font-urbane), "Urbanist", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* TÜM yazılar — sağa ve sola hizala (justify) + Türkçe için hyphenation.
+     Tailwind text-center / text-left / text-right class'ları daha spesifik
+     olduğu için merkezlenmiş başlıklar (hero, footer vb.) korunur. */
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+}
+
+/* Tüm elementler — body font'unu zorla (defensive override) */
+* {
+  font-family: inherit;
 }
 
 /* Selection */
@@ -116,7 +131,7 @@ body {
 
 /* Editorial drop cap */
 .drop-cap::first-letter {
-  font-family: var(--font-display);
+  font-family: var(--font-urbane), "Urbanist", system-ui, sans-serif;
   float: left;
   font-size: 4rem;
   line-height: 0.8;
@@ -127,7 +142,7 @@ body {
 
 /* Portable text styles */
 .portable-text h2 {
-  font-family: var(--font-display);
+  font-family: var(--font-urbane), "Urbanist", system-ui, sans-serif;
   font-size: 1.75rem;
   font-weight: 700;
   margin-top: 2.5rem;
@@ -136,7 +151,7 @@ body {
 }
 
 .portable-text h3 {
-  font-family: var(--font-display);
+  font-family: var(--font-urbane), "Urbanist", system-ui, sans-serif;
   font-size: 1.35rem;
   font-weight: 700;
   margin-top: 2rem;
@@ -145,7 +160,7 @@ body {
 }
 
 .portable-text p {
-  font-family: var(--font-serif);
+  font-family: var(--font-urbane), "Urbanist", system-ui, sans-serif;
   font-size: 1.2rem;
   line-height: 1.7;
   margin-bottom: 1.25rem;
@@ -183,7 +198,7 @@ body {
 }
 
 .portable-text li {
-  font-family: var(--font-serif);
+  font-family: var(--font-urbane), "Urbanist", system-ui, sans-serif;
   font-size: 1.2rem;
   line-height: 1.7;
   color: var(--color-soft-black);

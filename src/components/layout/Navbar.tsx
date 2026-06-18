@@ -122,8 +122,8 @@ export default function Navbar({ logoUrl }: NavbarProps) {
 
   return (
     <nav className="border-b-2 border-ink" aria-label="Ana menü">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-5 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 group">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-5 flex items-center justify-between gap-8 lg:gap-10 xl:gap-16">
+        <Link href="/" className="flex items-center gap-3 group shrink-0">
           <Image
             src={logo}
             alt="Sanatın Rotası - Ana sayfa"
