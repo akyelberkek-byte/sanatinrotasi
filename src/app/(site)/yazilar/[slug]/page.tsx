@@ -128,31 +128,47 @@ export default async function ArticlePage({ params }: Props) {
             </span>
           )
         )}
-        <h1 className="font-display text-3xl md:text-5xl font-bold text-ink mt-3 leading-tight">
+
+        {/* Yazar bloğu — başlığın ÜSTÜNDE, büyük fotoğraf + isim + role */}
+        {article.author && (
+          <div className="mt-5 flex items-center gap-4">
+            {article.author.image ? (
+              <Image
+                src={urlFor(article.author.image).width(240).height(240).url()}
+                alt={article.author.name}
+                width={120}
+                height={120}
+                sizes="(max-width: 768px) 88px, 120px"
+                className="w-[88px] h-[88px] md:w-[120px] md:h-[120px] rounded-full object-cover grayscale-[10%] flex-shrink-0"
+                priority
+              />
+            ) : (
+              <div className="w-[88px] h-[88px] md:w-[120px] md:h-[120px] rounded-full bg-warm-gray/30 flex items-center justify-center font-display text-3xl text-ink flex-shrink-0">
+                {article.author.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="font-sans text-[0.6rem] uppercase tracking-[0.25em] text-warm-gray mb-1">
+                Yazan
+              </p>
+              <p className="font-display text-xl md:text-2xl font-bold text-ink leading-tight">
+                {article.author.name}
+              </p>
+              {article.author.role && (
+                <p className="font-sans text-xs md:text-sm uppercase tracking-[0.15em] text-accent mt-1">
+                  {article.author.role}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <h1 className="font-display text-3xl md:text-5xl font-bold text-ink mt-8 leading-tight">
           {article.title}
         </h1>
         <div className="flex items-center gap-4 mt-6 font-sans text-[0.7rem] uppercase tracking-[0.15em] text-warm-gray">
-          {article.author && (
-            <div className="flex items-center gap-2">
-              {article.author.image && (
-                <Image
-                  src={urlFor(article.author.image).width(40).height(40).url()}
-                  alt={article.author.name}
-                  width={20}
-                  height={20}
-                  className="rounded-full"
-                />
-              )}
-              <span>{article.author.name}</span>
-            </div>
-          )}
-          {date && (
-            <>
-              <span>·</span>
-              <span>{date}</span>
-            </>
-          )}
-          <span>·</span>
+          {date && <span>{date}</span>}
+          {date && <span>·</span>}
           <span>{readMinutes} dk okuma</span>
           <span className="ml-auto">
             <FavoriteButton
