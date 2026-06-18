@@ -84,6 +84,35 @@ export const article = defineType({
       initialValue: false,
     }),
     defineField({
+      name: "editorsPick",
+      title: "Editör Seçimi",
+      type: "boolean",
+      description: "İşaretlerse ana sayfada 'Editör Seçimi' bölümünde döner",
+      initialValue: false,
+    }),
+    defineField({
+      name: "issueNumber",
+      title: "Sayı Numarası",
+      type: "number",
+      description:
+        "Dergi tarzı seri numarası. Örn: 42 → 'Sayı № 42'. Boş bırakırsan rozet gösterilmez.",
+    }),
+    defineField({
+      name: "series",
+      title: "Dizi / Koleksiyon",
+      type: "reference",
+      to: [{ type: "series" }],
+      description:
+        "Bu yazı bir diziyi mi tamamlıyor? Önce 'Diziler' sekmesinden oluştur.",
+    }),
+    defineField({
+      name: "seriesPart",
+      title: "Dizide Bölüm Numarası",
+      type: "number",
+      description: "Diziye dahilse bölüm sırası. Örn: 1, 2, 3...",
+      hidden: ({ document }) => !document?.series,
+    }),
+    defineField({
       name: "seo",
       title: "SEO",
       type: "seo",

@@ -42,6 +42,16 @@ export const structure: StructureResolver = (S) =>
             .defaultOrdering([{ field: "createdAt", direction: "desc" }])
         ),
 
+      S.listItem()
+        .title("Diziler")
+        .schemaType("series")
+        .child(S.documentTypeList("series").title("Diziler")),
+
+      S.listItem()
+        .title("Günün Eseri")
+        .schemaType("dailyArtwork")
+        .child(S.documentTypeList("dailyArtwork").title("Günün Eseri Havuzu")),
+
       S.divider(),
 
       // Topluluk

@@ -57,5 +57,34 @@ export const portableText = defineType({
     defineArrayMember({
       type: "youtube",
     }),
+    // Magazine-style pull-out tırnak
+    defineArrayMember({
+      name: "pullQuote",
+      title: "Vurgulu Alıntı (Magazine Style)",
+      type: "object",
+      fields: [
+        {
+          name: "text",
+          title: "Alıntı Metni",
+          type: "text",
+          rows: 3,
+          validation: (r) => r.required().max(280),
+        },
+        {
+          name: "attribution",
+          title: "Söyleyen / Kaynak (opsiyonel)",
+          type: "string",
+        },
+      ],
+      preview: {
+        select: { title: "text", subtitle: "attribution" },
+        prepare({ title, subtitle }) {
+          return {
+            title: `“${title?.slice(0, 60) || "(boş)"}”`,
+            subtitle,
+          };
+        },
+      },
+    }),
   ],
 });
