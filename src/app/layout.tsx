@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Cormorant_Garamond, Libre_Franklin } from "next/font/google";
+import { Playfair_Display, Cormorant_Garamond, Libre_Franklin, Urbanist } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { trTR } from "@clerk/localizations";
 import { Analytics } from "@vercel/analytics/next";
@@ -30,6 +30,14 @@ const libre = Libre_Franklin({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
+  display: "swap",
+});
+
+// Urbanist — hero başlığı için (geometric sans-serif, "Urbane" benzeri free font)
+const urbanist = Urbanist({
+  variable: "--font-urbane",
+  subsets: ["latin"],
+  weight: ["700", "800", "900"],
   display: "swap",
 });
 
@@ -82,7 +90,7 @@ export default function RootLayout({
   return (
     <html
       lang="tr"
-      className={`${playfair.variable} ${cormorant.variable} ${libre.variable}`}
+      className={`${playfair.variable} ${cormorant.variable} ${libre.variable} ${urbanist.variable}`}
     >
       <body>
         {hasClerkKeys ? (
