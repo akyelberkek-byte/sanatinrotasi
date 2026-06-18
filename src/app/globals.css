@@ -4,10 +4,10 @@
   --color-ink: #1a1a18;
   --color-cream: #f5f0e8;
   --color-warm-gray: #b8b0a2;
-  /* Accent — logonun kırmızısı (#ee413d). Önceden turuncuydu (#c45d3e),
-     site genelinde "turuncu" yerine logo rengi kullanılıyor. */
-  --color-accent: #ee413d;
-  --color-accent-dark: #c8342f;
+  /* Accent — koyu bordo kırmızı (#9A1F25), kullanıcı seçimi.
+     Site genelinde "turuncu" yerine bu renk kullanılıyor. */
+  --color-accent: #9a1f25;
+  --color-accent-dark: #75161b;
   --color-paper: #ebe6db;
   --color-soft-black: #2d2b28;
 
