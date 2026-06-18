@@ -9,6 +9,8 @@ import {
   ROUTES_QUERY,
   CATEGORIES_QUERY,
   FOUNDER_QUERY,
+  EDITORS_PICK_QUERY,
+  DAILY_ARTWORK_QUERY,
 } from "@/sanity/queries";
 import { getSiteSettings } from "@/sanity/lib/settings";
 import ArticleCard from "@/components/shared/ArticleCard";
@@ -18,18 +20,31 @@ import SectionLabel from "@/components/shared/SectionLabel";
 import NewsletterForm from "@/components/shared/NewsletterForm";
 import ArtQuote from "@/components/shared/ArtQuote";
 import HeroWave from "@/components/shared/HeroWave";
+import EditorsPickSection from "@/components/shared/EditorsPickSection";
+import DailyArtwork from "@/components/shared/DailyArtwork";
 import Ornament from "@/components/shared/Ornament";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [settings, articles, events, routes, categories, founder] = await Promise.all([
+  const [
+    settings,
+    articles,
+    events,
+    routes,
+    categories,
+    founder,
+    editorsPicks,
+    dailyArtworks,
+  ] = await Promise.all([
     getSiteSettings(),
     client.fetch(FEATURED_ARTICLES_QUERY),
     client.fetch(EVENTS_QUERY, { limit: 4 }),
     client.fetch(ROUTES_QUERY),
     client.fetch(CATEGORIES_QUERY),
     client.fetch(FOUNDER_QUERY),
+    client.fetch(EDITORS_PICK_QUERY).catch(() => []),
+    client.fetch(DAILY_ARTWORK_QUERY).catch(() => []),
   ]);
 
   const logoUrl = settings?.logo?.asset
@@ -182,6 +197,11 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Editör Seçimi — Ela manuel seçtiği yazılar */}
+      {editorsPicks && editorsPicks.length > 0 && (
+        <EditorsPickSection articles={editorsPicks} />
+      )}
+
       {/* Categories */}
       {categories && categories.length > 0 && (
         <section className="py-10 border-t-2 border-ink animate-fade-up stagger-3">
@@ -265,6 +285,11 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+      )}
+
+      {/* Günün Eseri — Met Museum tarzı küçük widget */}
+      {dailyArtworks && dailyArtworks.length > 0 && (
+        <DailyArtwork artworks={dailyArtworks} />
       )}
 
       <Ornament />

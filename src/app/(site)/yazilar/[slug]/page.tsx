@@ -1,8 +1,15 @@
 import { findArticleBySlug } from "@/sanity/lib/findArticle";
 import { urlFor } from "@/sanity/image";
 import { client } from "@/sanity/client";
-import { COMMENTS_BY_ARTICLE_QUERY, RELATED_ARTICLES_QUERY } from "@/sanity/queries";
+import {
+  COMMENTS_BY_ARTICLE_QUERY,
+  RELATED_ARTICLES_QUERY,
+  PREV_NEXT_ARTICLES_QUERY,
+  SERIES_ARTICLES_QUERY,
+} from "@/sanity/queries";
 import ArticleCard from "@/components/shared/ArticleCard";
+import StickyTOC from "@/components/shared/StickyTOC";
+import ReadingIndicator from "@/components/shared/ReadingIndicator";
 import { isAdminUser } from "@/lib/admin";
 import Image from "next/image";
 import Link from "next/link";
@@ -67,25 +74,44 @@ export default async function ArticlePage({ params }: Props) {
 
   if (!article) notFound();
 
-  // Fetch comments + related articles + current user in parallel
-  const [comments, relatedArticles, user] = await Promise.all([
-    client
-      .fetch(COMMENTS_BY_ARTICLE_QUERY, { articleId: article._id })
-      .catch(() => []),
-    article.category?._id || article.category?.slug
-      ? client
-          .fetch(
-            RELATED_ARTICLES_QUERY,
-            {
-              categoryId: article.category._id,
-              articleId: article._id,
-            },
-            { next: { revalidate: 300 } },
-          )
-          .catch(() => [])
-      : Promise.resolve([]),
-    currentUser().catch(() => null),
-  ]);
+  // Fetch comments + related + prev/next + series articles + current user in parallel
+  const [comments, relatedArticles, prevNext, seriesArticles, user] =
+    await Promise.all([
+      client
+        .fetch(COMMENTS_BY_ARTICLE_QUERY, { articleId: article._id })
+        .catch(() => []),
+      article.category?._id || article.category?.slug
+        ? client
+            .fetch(
+              RELATED_ARTICLES_QUERY,
+              {
+                categoryId: article.category._id,
+                articleId: article._id,
+              },
+              { next: { revalidate: 300 } },
+            )
+            .catch(() => [])
+        : Promise.resolve([]),
+      article.publishedAt
+        ? client
+            .fetch(
+              PREV_NEXT_ARTICLES_QUERY,
+              { publishedAt: article.publishedAt },
+              { next: { revalidate: 300 } },
+            )
+            .catch(() => null)
+        : Promise.resolve(null),
+      article.series?._id
+        ? client
+            .fetch(
+              SERIES_ARTICLES_QUERY,
+              { seriesId: article.series._id },
+              { next: { revalidate: 300 } },
+            )
+            .catch(() => [])
+        : Promise.resolve([]),
+      currentUser().catch(() => null),
+    ]);
 
   const currentUserInfo = user
     ? {
@@ -111,22 +137,56 @@ export default async function ArticlePage({ params }: Props) {
   const readMinutes = readingTimeMinutes(article.body);
 
   return (
-    <article className="max-w-4xl mx-auto px-6 md:px-12 py-12">
+    <article id="article-root" className="max-w-4xl mx-auto px-6 md:px-12 py-12">
+      {/* Sticky içerik tablosu (sadece desktop, otomatik h2/h3'lere göre) */}
+      <StickyTOC contentSelector="#article-content" />
+
+      {/* Kaldığın yer + reading streak (client) */}
+      <ReadingIndicator slug={article.slug.current} />
+
       {/* Header */}
       <header className="mb-10 animate-fade-up">
-        {article.category?.title && (
-          article.category.slug?.current ? (
-            <Link
-              href={`/kategori/${article.category.slug.current}`}
-              className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-accent link-underline"
-            >
-              {article.category.title}
-            </Link>
-          ) : (
-            <span className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-accent">
-              {article.category.title}
+        {/* Sayı numarası + Kategori */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {typeof article.issueNumber === "number" && (
+            <span className="font-sans text-[0.6rem] uppercase tracking-[0.3em] text-accent border border-accent/40 px-2 py-1">
+              Sayı № {article.issueNumber}
             </span>
-          )
+          )}
+          {article.category?.title && (
+            article.category.slug?.current ? (
+              <Link
+                href={`/kategori/${article.category.slug.current}`}
+                className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-accent link-underline"
+              >
+                {article.category.title}
+              </Link>
+            ) : (
+              <span className="font-sans text-[0.65rem] uppercase tracking-[0.2em] text-accent">
+                {article.category.title}
+              </span>
+            )
+          )}
+        </div>
+
+        {/* Dizi rozeti — bu yazı bir dizinin parçasıysa */}
+        {article.series && (
+          <Link
+            href={`/diziler/${article.series.slug}`}
+            className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 bg-accent/5 border border-accent/30 hover:bg-accent/10 transition-colors"
+          >
+            <span className="font-sans text-[0.6rem] uppercase tracking-[0.2em] text-accent">
+              Dizi
+            </span>
+            <span className="font-display text-sm text-ink font-bold">
+              {article.series.title}
+            </span>
+            {typeof article.seriesPart === "number" && (
+              <span className="font-sans text-[0.65rem] text-warm-gray">
+                · Bölüm {article.seriesPart}
+              </span>
+            )}
+          </Link>
         )}
 
         {/* Yazar bloğu — başlığın ÜSTÜNDE, büyük fotoğraf + isim + role */}
@@ -205,9 +265,90 @@ export default async function ArticlePage({ params }: Props) {
       })()}
 
       {/* Body */}
-      <div className="portable-text animate-fade-up stagger-2">
+      <div
+        id="article-content"
+        className="portable-text animate-fade-up stagger-2"
+      >
         {article.body && <PortableRenderer value={article.body} />}
       </div>
+
+      {/* Dizi navigation — bu yazı bir dizinin parçasıysa, diğer bölümler */}
+      {article.series && Array.isArray(seriesArticles) && seriesArticles.length > 1 && (
+        <section className="mt-12 pt-8 border-t border-ink/15">
+          <p className="font-sans text-[0.65rem] uppercase tracking-[0.25em] text-accent mb-3">
+            Dizi · {article.series.title}
+          </p>
+          <ol className="space-y-2">
+            {seriesArticles.map((s: any, idx: number) => {
+              const isCurrent = s.slug?.current === article.slug.current;
+              return (
+                <li key={s._id}>
+                  {isCurrent ? (
+                    <span className="block font-display font-bold text-accent">
+                      <span className="text-warm-gray font-sans text-[0.7rem] mr-2">
+                        {String(idx + 1).padStart(2, "0")}
+                      </span>
+                      {s.title}{" "}
+                      <span className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-warm-gray">
+                        — şu an okuyorsun
+                      </span>
+                    </span>
+                  ) : (
+                    <Link
+                      href={`/yazilar/${s.slug.current}`}
+                      className="block font-display text-ink hover:text-accent transition-colors"
+                    >
+                      <span className="text-warm-gray font-sans text-[0.7rem] mr-2">
+                        {String(idx + 1).padStart(2, "0")}
+                      </span>
+                      {s.title}
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
+
+      {/* Önceki / Sonraki yazı navigation */}
+      {prevNext && (prevNext.prev || prevNext.next) && (
+        <nav
+          aria-label="Yazı navigasyonu"
+          className="mt-12 pt-8 border-t border-ink/15 grid grid-cols-1 md:grid-cols-2 gap-4"
+        >
+          {prevNext.prev ? (
+            <Link
+              href={`/yazilar/${prevNext.prev.slug}`}
+              className="group p-4 border border-ink/10 hover:border-accent/30 transition-colors"
+            >
+              <p className="font-sans text-[0.6rem] uppercase tracking-[0.2em] text-warm-gray mb-1">
+                ← Önceki
+              </p>
+              <p className="font-display text-base font-bold text-ink group-hover:text-accent transition-colors line-clamp-2">
+                {prevNext.prev.title}
+              </p>
+            </Link>
+          ) : (
+            <div />
+          )}
+          {prevNext.next ? (
+            <Link
+              href={`/yazilar/${prevNext.next.slug}`}
+              className="group p-4 border border-ink/10 hover:border-accent/30 transition-colors text-right"
+            >
+              <p className="font-sans text-[0.6rem] uppercase tracking-[0.2em] text-warm-gray mb-1">
+                Sonraki →
+              </p>
+              <p className="font-display text-base font-bold text-ink group-hover:text-accent transition-colors line-clamp-2">
+                {prevNext.next.title}
+              </p>
+            </Link>
+          ) : (
+            <div />
+          )}
+        </nav>
+      )}
 
       {/* Sosyal Medya Görseli — yazının sonunda, her zaman (SEO'da yüklenmişse).
           Ana Görselle aynı olsa bile gösterilir (Ela'nın isteği: her zaman son). */}

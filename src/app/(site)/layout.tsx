@@ -3,6 +3,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import PageViewTracker from "@/components/shared/PageViewTracker";
 import ClickEffect from "@/components/shared/ClickEffect";
+import ScrollProgressBar from "@/components/shared/ScrollProgressBar";
 import { getSiteSettings } from "@/sanity/lib/settings";
 import { urlFor } from "@/sanity/image";
 
@@ -17,6 +18,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="flex flex-col min-h-screen">
+      <ScrollProgressBar />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-ink focus:text-cream focus:font-sans focus:text-sm"

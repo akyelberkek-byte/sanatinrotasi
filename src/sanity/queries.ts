@@ -158,6 +158,10 @@ export const ARTICLE_BY_SLUG_QUERY = groq`
     },
     tags,
     featured,
+    editorsPick,
+    issueNumber,
+    seriesPart,
+    series-> { _id, title, "slug": slug.current, description },
     seo {
       metaTitle,
       metaDescription,
@@ -178,6 +182,63 @@ export const ARTICLES_BY_CATEGORY_QUERY = groq`
     "mainImage": coalesce(mainImage, seo.ogImage),
     author-> { name, slug },
     category-> { title, slug, color }
+  }
+`;
+
+// Önceki / Sonraki yazı — yayın tarihine göre komşu (aynı kategoride değil, genel)
+export const PREV_NEXT_ARTICLES_QUERY = groq`{
+  "prev": *[_type == "article" && publishedAt < $publishedAt && defined(slug.current)]
+    | order(publishedAt desc) [0] {
+      title,
+      "slug": slug.current,
+      mainImage
+    },
+  "next": *[_type == "article" && publishedAt > $publishedAt && defined(slug.current)]
+    | order(publishedAt asc) [0] {
+      title,
+      "slug": slug.current,
+      mainImage
+    }
+}`;
+
+// Editör Seçimi — homepage için
+export const EDITORS_PICK_QUERY = groq`
+  *[_type == "article" && editorsPick == true]
+    | order(publishedAt desc) [0...3] {
+    _id,
+    title,
+    slug,
+    publishedAt,
+    excerpt,
+    "mainImage": coalesce(mainImage, seo.ogImage),
+    author-> { name },
+    category-> { title, slug }
+  }
+`;
+
+// Günün Eseri — havuzdan rastgele bir tane
+export const DAILY_ARTWORK_QUERY = groq`
+  *[_type == "dailyArtwork" && active == true] {
+    _id,
+    title,
+    artist,
+    year,
+    medium,
+    image,
+    description,
+    sourceUrl
+  }
+`;
+
+// Dizinin tüm bölümleri — series sayfası ve in-article navigation için
+export const SERIES_ARTICLES_QUERY = groq`
+  *[_type == "article" && series._ref == $seriesId && defined(slug.current)]
+    | order(seriesPart asc, publishedAt asc) {
+    _id,
+    title,
+    slug,
+    seriesPart,
+    publishedAt
   }
 `;
 

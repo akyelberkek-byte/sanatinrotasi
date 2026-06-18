@@ -61,6 +61,38 @@ const components: Partial<PortableTextReactComponents> = {
         </figure>
       );
     },
+    // Magazine-style pull-quote — yazıyı görsel olarak böler, ritim katar
+    pullQuote: ({
+      value,
+    }: {
+      value: { text?: string; attribution?: string };
+    }) => {
+      if (!value?.text) return null;
+      return (
+        <aside className="my-12 mx-auto max-w-2xl text-center relative px-8 md:px-12">
+          <span
+            aria-hidden="true"
+            className="absolute left-0 -top-2 font-display text-7xl md:text-8xl text-accent leading-none select-none"
+          >
+            “
+          </span>
+          <p className="font-display text-2xl md:text-3xl font-bold text-ink leading-snug">
+            {value.text}
+          </p>
+          <span
+            aria-hidden="true"
+            className="absolute right-0 -bottom-8 font-display text-7xl md:text-8xl text-accent leading-none select-none"
+          >
+            ”
+          </span>
+          {value.attribution && (
+            <p className="font-sans text-[0.7rem] uppercase tracking-[0.25em] text-warm-gray mt-6">
+              — {value.attribution}
+            </p>
+          )}
+        </aside>
+      );
+    },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     youtube: ({ value }: { value: any }) => {
       if (!value?.url) return null;
