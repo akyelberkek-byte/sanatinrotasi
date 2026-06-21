@@ -53,7 +53,11 @@ export async function GET(req: NextRequest) {
       const params = new URLSearchParams({
         url: webhookUrl,
         max_connections: "10",
-        allowed_updates: JSON.stringify(["message", "edited_message"]),
+        allowed_updates: JSON.stringify([
+          "message",
+          "edited_message",
+          "callback_query",
+        ]),
         drop_pending_updates: "true",
       });
       if (WEBHOOK_SECRET) params.append("secret_token", WEBHOOK_SECRET);
