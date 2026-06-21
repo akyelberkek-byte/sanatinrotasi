@@ -50,13 +50,41 @@ function helpText(): string {
   return `<b>🎨 Sanatın Rotası Bot</b>
 
 <b>Yeni içerik yayımlamak için:</b>
-/yeni — Adım adım rehber başlat (Sanat Rotası, Yazı veya Etkinlik)
+/yeni — Adım adım rehber başlat (Sanat Rotası veya Yazı)
 
 <b>Hızlı komutlar:</b>
+/durum — Devam eden işlemin durumunu göster
 /iptal — Devam eden işlemi iptal et
 /yardim — Bu mesaj
 
+<b>İpuçları:</b>
+• Görseli sıkıştırılmış (photo) veya dosya olarak gönderebilirsin
+• Opsiyonel adımlarda <i>geç</i> yaz, atla
+• Slug'ı beğenmezsen <i>Yeniden</i> butonuna bas, yeni slug yaz
+
 <i>Bot Sanatın Rotası ekibine özeldir.</i>`;
+}
+
+function statusText(session: Session): string {
+  const d = session.data;
+  const typeName = session.type === "rota" ? "Sanat Rotası" : session.type === "yazi" ? "Yazı" : "Tip seçilmedi";
+  const filled: string[] = [];
+  if (d.title) filled.push("Başlık");
+  if (d.slug) filled.push("Slug");
+  if (d.subtitle) filled.push("Alt başlık");
+  if (d.city) filled.push(`Şehir (${d.city})`);
+  if (d.authorName) filled.push(`Yazar (${d.authorName})`);
+  if (d.categoryTitle) filled.push(`Kategori (${d.categoryTitle})`);
+  if (d.mainImageAssetId) filled.push("Ana görsel ✓");
+  if (d.altText) filled.push("Alt metin");
+  if (d.description) filled.push("Açıklama");
+  if (d.excerpt) filled.push("Özet");
+  if (d.content) filled.push("İçerik");
+  if (d.tags?.length) filled.push(`Etiketler (${d.tags.length})`);
+  if (d.metaTitle) filled.push("Meta başlık");
+  if (d.metaDescription) filled.push("Meta açıklama");
+  if (d.ogImageAssetId) filled.push("OG görsel ✓");
+  return `<b>📊 Mevcut Oturum</b>\n\n<b>Tip:</b> ${typeName}\n<b>Şu anki adım:</b> <code>${session.step}</code>\n\n<b>Dolu alanlar:</b>\n${filled.length ? filled.map((f) => `• ${f}`).join("\n") : "(henüz boş)"}\n\nİptal için /iptal`;
 }
 
 function escapeHtml(s: string): string {
@@ -67,17 +95,41 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-/** Telegram'dan en yüksek çözünürlüklü fotoğrafı indir ve Sanity'ye yükle. */
+/** Mesajda herhangi bir görsel içeriği var mı? (photo veya document image/*) */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function hasImage(msg: any): boolean {
+  if (Array.isArray(msg.photo) && msg.photo.length > 0) return true;
+  if (msg.document?.mime_type?.startsWith?.("image/")) return true;
+  return false;
+}
+
+/**
+ * Telegram'dan görseli (photo veya document) indir, Sanity'ye yükle.
+ * - msg.photo: sıkıştırılmış, en yüksek çözünürlük
+ * - msg.document: "Dosya olarak gönder" seçeneğiyle uncompressed image
+ *   (Ela yüksek kalite için bunu tercih edebilir)
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function uploadPhotoFromMessage(msg: any): Promise<{ _id: string; url: string } | null> {
   if (!TOKEN) return null;
-  if (!Array.isArray(msg.photo) || msg.photo.length === 0) return null;
-  const photo = msg.photo[msg.photo.length - 1];
-  const url = await getTelegramFileUrl(TOKEN, photo.file_id);
+  let fileId: string | undefined;
+  let mimeType = "image/jpeg";
+  let filename = `tg-${Date.now()}.jpg`;
+
+  if (Array.isArray(msg.photo) && msg.photo.length > 0) {
+    fileId = msg.photo[msg.photo.length - 1].file_id;
+  } else if (msg.document?.mime_type?.startsWith?.("image/")) {
+    fileId = msg.document.file_id;
+    mimeType = msg.document.mime_type;
+    if (msg.document.file_name) filename = msg.document.file_name;
+  }
+
+  if (!fileId) return null;
+  const url = await getTelegramFileUrl(TOKEN, fileId);
   if (!url) return null;
   const buffer = await downloadAsBuffer(url);
   if (!buffer) return null;
-  return uploadImageAsset(buffer, "image/jpeg", `tg-${Date.now()}.jpg`);
+  return uploadImageAsset(buffer, mimeType, filename);
 }
 
 /* ============================================================
@@ -354,6 +406,18 @@ async function handleMessage(chatId: number, msg: any): Promise<void> {
     await tell(chatId, "❌ İşlem iptal edildi. Yeni başlamak için /yeni");
     return;
   }
+  if (text === "/durum" || text === "/status") {
+    const s = await getSession(chatId);
+    if (!s) {
+      await tell(
+        chatId,
+        "Aktif bir oturum yok. /yeni ile başlayabilirsin.",
+      );
+      return;
+    }
+    await tell(chatId, statusText(s));
+    return;
+  }
   if (text === "/yeni" || text === "/new") {
     const s = newSession();
     await setSession(chatId, s);
@@ -392,8 +456,19 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "CONFIRM_SLUG": {
-      // User normally clicks button; if types text, treat as new slug
-      d.slug = turkishSlugify(text).slice(0, 96);
+      if (!text) {
+        await tell(chatId, "🔗 Slug'ı metin olarak yaz (sadece a-z, 0-9, tire).");
+        return;
+      }
+      const slugged = turkishSlugify(text).slice(0, 96);
+      if (!slugged) {
+        await tell(
+          chatId,
+          "❌ Geçerli slug üretilemedi. Sadece harf/rakam içeren bir metin gönder.",
+        );
+        return;
+      }
+      d.slug = slugged;
       session.step = "CONFIRM_SLUG";
       await setSession(chatId, session);
       await askStep(chatId, session);
@@ -401,7 +476,12 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_SUBTITLE": {
-      if (text.toLowerCase() !== "geç" && text.toLowerCase() !== "atla") {
+      if (!text) {
+        await tell(chatId, "📝 Alt başlığı metin olarak yaz veya 'geç' diye yanıtla.");
+        return;
+      }
+      const lower = text.toLowerCase();
+      if (lower !== "geç" && lower !== "atla") {
         d.subtitle = text.slice(0, 300);
       }
       await advance(chatId, session);
@@ -409,7 +489,12 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_CITY": {
-      if (text.toLowerCase() === "tamam" || text.toLowerCase() === "ok") {
+      if (!text) {
+        await tell(chatId, "🏙️ Şehir adı yaz veya 'tamam' ile Eskişehir bırak.");
+        return;
+      }
+      const lower = text.toLowerCase();
+      if (lower === "tamam" || lower === "ok") {
         d.city = "Eskişehir";
       } else {
         d.city = text.slice(0, 80);
@@ -419,8 +504,11 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_MAIN_IMAGE": {
-      if (!Array.isArray(msg.photo) || msg.photo.length === 0) {
-        await tell(chatId, "📷 Lütfen bir görsel gönder.");
+      if (!hasImage(msg)) {
+        await tell(
+          chatId,
+          "📷 Lütfen bir görsel gönder (fotoğraf veya dosya olarak).",
+        );
         return;
       }
       await sendChatAction(TOKEN!, chatId, "upload_photo");
@@ -437,8 +525,11 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_DESCRIPTION": {
-      if (!text) {
-        await tell(chatId, "Açıklama boş olamaz.");
+      if (!text || text.length < 10) {
+        await tell(
+          chatId,
+          "📝 Açıklama en az 10 karakter olmalı. Metin gönder.",
+        );
         return;
       }
       d.description = text;
@@ -447,20 +538,31 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_ALT_TEXT": {
+      if (!text) {
+        await tell(chatId, "🔤 Alt metni yaz (görsel görünmediğinde gösterilen).");
+        return;
+      }
       d.altText = text.slice(0, 200);
       await advance(chatId, session);
       return;
     }
 
     case "ASK_EXCERPT": {
+      if (!text) {
+        await tell(chatId, "✂️ Özet metnini yaz.");
+        return;
+      }
       d.excerpt = text.slice(0, 200);
       await advance(chatId, session);
       return;
     }
 
     case "ASK_CONTENT": {
-      if (!text) {
-        await tell(chatId, "İçerik boş olamaz.");
+      if (!text || text.length < 20) {
+        await tell(
+          chatId,
+          "📄 İçerik en az 20 karakter olmalı. Yazıyı metin olarak gönder.",
+        );
         return;
       }
       d.content = text;
@@ -469,7 +571,12 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_TAGS": {
-      if (text.toLowerCase() !== "geç" && text.toLowerCase() !== "atla") {
+      if (!text) {
+        await tell(chatId, "🏷️ Etiketleri virgülle yaz veya 'geç' yanıtla.");
+        return;
+      }
+      const lower = text.toLowerCase();
+      if (lower !== "geç" && lower !== "atla") {
         d.tags = text
           .split(",")
           .map((t) => t.trim())
@@ -481,7 +588,12 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_META_TITLE": {
-      if (text.toLowerCase() !== "geç" && text.toLowerCase() !== "atla") {
+      if (!text) {
+        await tell(chatId, "🔍 Meta başlığı yaz veya 'geç' yanıtla.");
+        return;
+      }
+      const lower = text.toLowerCase();
+      if (lower !== "geç" && lower !== "atla") {
         d.metaTitle = text.slice(0, 60);
       }
       await advance(chatId, session);
@@ -489,7 +601,12 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_META_DESCRIPTION": {
-      if (text.toLowerCase() !== "geç" && text.toLowerCase() !== "atla") {
+      if (!text) {
+        await tell(chatId, "🔍 Meta açıklamayı yaz veya 'geç' yanıtla.");
+        return;
+      }
+      const lower = text.toLowerCase();
+      if (lower !== "geç" && lower !== "atla") {
         d.metaDescription = text.slice(0, 160);
       }
       await advance(chatId, session);
@@ -497,27 +614,30 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_OG_IMAGE": {
-      if (text.toLowerCase() === "geç" || text.toLowerCase() === "atla") {
+      // Photo geldiyse, caption'daki "geç" göz ardı edilir — görsel önceliklidir
+      if (hasImage(msg)) {
+        await sendChatAction(TOKEN!, chatId, "upload_photo");
+        const asset = await uploadPhotoFromMessage(msg);
+        if (!asset) {
+          await tell(chatId, "❌ Görsel yüklenemedi.");
+          return;
+        }
+        d.ogImageAssetId = asset._id;
+        d.ogImageUrl = asset.url;
+        await tell(chatId, "✓ Sosyal medya görseli kaydedildi.");
         await advance(chatId, session);
         return;
       }
-      if (!Array.isArray(msg.photo) || msg.photo.length === 0) {
-        await tell(
-          chatId,
-          "📷 Görsel gönder veya 'geç' yazarak atla.",
-        );
+      // Görsel yoksa metin kontrolü
+      const lower = text.toLowerCase();
+      if (lower === "geç" || lower === "atla") {
+        await advance(chatId, session);
         return;
       }
-      await sendChatAction(TOKEN!, chatId, "upload_photo");
-      const asset = await uploadPhotoFromMessage(msg);
-      if (!asset) {
-        await tell(chatId, "❌ Görsel yüklenemedi.");
-        return;
-      }
-      d.ogImageAssetId = asset._id;
-      d.ogImageUrl = asset.url;
-      await tell(chatId, "✓ Sosyal medya görseli kaydedildi.");
-      await advance(chatId, session);
+      await tell(
+        chatId,
+        "📷 Görsel gönder veya 'geç' yazarak atla (ana görsel kullanılır).",
+      );
       return;
     }
 
