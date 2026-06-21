@@ -40,6 +40,15 @@ function textToPortableBlocks(text: string) {
     .filter(Boolean);
 }
 
+/** Asset _id dizisini portable text image bloklarına çevirir (galeri). */
+function imageAssetsToPortableBlocks(assetIds: string[]) {
+  return assetIds.map((assetId, i) => ({
+    _type: "image",
+    _key: uniqueKey("img", i),
+    asset: { _type: "reference", _ref: assetId },
+  }));
+}
+
 /** Sanity Asset'ine görsel yükler — buffer alır, asset {_id, url} döner. */
 export async function uploadImageAsset(
   buffer: Buffer,
@@ -131,6 +140,8 @@ export interface PublishArticleParams {
   authorRef?: string;
   categoryRef?: string;
   mainImageAssetId?: string;
+  /** Ek görseller — yazı body'sinin sonuna inline figure olarak eklenir */
+  galleryImageAssetIds?: string[];
   altText?: string;
   excerpt?: string;
   tags?: string[];
@@ -150,7 +161,13 @@ export async function publishArticle(params: PublishArticleParams): Promise<{
     params.slug || turkishSlugify(params.title).slice(0, 96) || "haber";
   const slug = await uniqueSlugForType("article", baseSlug);
 
-  const body = textToPortableBlocks(params.bodyText || params.title);
+  // Body = metin + (varsa) galeri görselleri (sonda)
+  const body = [
+    ...textToPortableBlocks(params.bodyText || params.title),
+    ...(params.galleryImageAssetIds && params.galleryImageAssetIds.length > 0
+      ? imageAssetsToPortableBlocks(params.galleryImageAssetIds)
+      : []),
+  ];
 
   const mainImage = params.mainImageAssetId
     ? {
@@ -215,6 +232,8 @@ export interface PublishRouteParams {
   city?: string;
   descriptionText: string;
   mainImageAssetId?: string;
+  /** Ek görseller — rotanın açıklama sonuna inline figure olarak eklenir */
+  galleryImageAssetIds?: string[];
   tags?: string[];
   metaTitle?: string;
   metaDescription?: string;
@@ -232,7 +251,12 @@ export async function publishRoute(params: PublishRouteParams): Promise<{
     params.slug || turkishSlugify(params.title).slice(0, 96) || "rota";
   const slug = await uniqueSlugForType("route", baseSlug);
 
-  const description = textToPortableBlocks(params.descriptionText || params.title);
+  const description = [
+    ...textToPortableBlocks(params.descriptionText || params.title),
+    ...(params.galleryImageAssetIds && params.galleryImageAssetIds.length > 0
+      ? imageAssetsToPortableBlocks(params.galleryImageAssetIds)
+      : []),
+  ];
 
   const mainImage = params.mainImageAssetId
     ? {

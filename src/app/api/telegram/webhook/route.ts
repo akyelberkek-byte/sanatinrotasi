@@ -75,7 +75,10 @@ function statusText(session: Session): string {
   if (d.city) filled.push(`Şehir (${d.city})`);
   if (d.authorName) filled.push(`Yazar (${d.authorName})`);
   if (d.categoryTitle) filled.push(`Kategori (${d.categoryTitle})`);
-  if (d.mainImageAssetId) filled.push("Ana görsel ✓");
+  if (d.mainImageAssetId) {
+    const extras = d.extraImageAssetIds?.length || 0;
+    filled.push(extras > 0 ? `Ana görsel ✓ (+${extras} galeri)` : "Ana görsel ✓");
+  }
   if (d.altText) filled.push("Alt metin");
   if (d.description) filled.push("Açıklama");
   if (d.excerpt) filled.push("Özet");
@@ -278,7 +281,10 @@ async function askStep(
     }
 
     case "ASK_MAIN_IMAGE":
-      await tell(chatId, "📷 <b>Ana görsel</b>i gönder.");
+      await tell(
+        chatId,
+        "📷 <b>Ana görsel</b>i gönder.\n\n<i>İstersen birden fazla görsel gönderebilirsin — ilki ana görsel olur, kalan görseller yazının sonuna galeri olarak eklenir.</i>\n\nBittiğinde /devam yaz.",
+      );
       return;
 
     case "ASK_DESCRIPTION":
@@ -369,7 +375,10 @@ function formatPreview(session: Session): string {
     if (d.categoryTitle)
       s += `<b>Kategori:</b> ${escapeHtml(d.categoryTitle)}\n`;
   }
-  if (d.mainImageAssetId) s += `<b>Ana görsel:</b> ✓\n`;
+  if (d.mainImageAssetId) {
+    const extras = d.extraImageAssetIds?.length || 0;
+    s += `<b>Ana görsel:</b> ✓${extras > 0 ? ` (+${extras} galeri görseli)` : ""}\n`;
+  }
   if (d.altText) s += `<b>Alt metin:</b> ${escapeHtml(d.altText.slice(0, 50))}\n`;
   if (session.type === "rota" && d.description)
     s += `<b>Açıklama:</b> ${escapeHtml(d.description.slice(0, 80))}…\n`;
@@ -504,23 +513,61 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_MAIN_IMAGE": {
+      // /devam ile sonraki adıma geç (en az 1 görsel olmalı)
+      if (text === "/devam" || text === "/tamam") {
+        if (!d.mainImageAssetId) {
+          await tell(
+            chatId,
+            "❌ En az 1 ana görsel gerekli. Önce bir fotoğraf gönder.",
+          );
+          return;
+        }
+        const total =
+          1 + (d.extraImageAssetIds?.length || 0);
+        await tell(
+          chatId,
+          `✓ Toplam <b>${total}</b> görsel kaydedildi. Sonraki adıma geçiyorum.`,
+        );
+        await advance(chatId, session);
+        return;
+      }
+
       if (!hasImage(msg)) {
         await tell(
           chatId,
-          "📷 Lütfen bir görsel gönder (fotoğraf veya dosya olarak).",
+          "📷 Görsel gönder veya bitmek için /devam yaz.",
         );
         return;
       }
+
       await sendChatAction(TOKEN!, chatId, "upload_photo");
       const asset = await uploadPhotoFromMessage(msg);
       if (!asset) {
         await tell(chatId, "❌ Görsel yüklenemedi, tekrar dene.");
         return;
       }
-      d.mainImageAssetId = asset._id;
-      d.mainImageUrl = asset.url;
-      await tell(chatId, "✓ Ana görsel kaydedildi.");
-      await advance(chatId, session);
+
+      if (!d.mainImageAssetId) {
+        // İlk görsel — ana görsel olur
+        d.mainImageAssetId = asset._id;
+        d.mainImageUrl = asset.url;
+        await setSession(chatId, session);
+        await tell(
+          chatId,
+          "✓ Ana görsel kaydedildi.\n\n<i>Başka görsel eklemek için yeni fotoğraf gönder, bitirmek için /devam yaz.</i>",
+        );
+        return;
+      }
+
+      // İkinci ve sonraki görseller — galeri
+      if (!d.extraImageAssetIds) d.extraImageAssetIds = [];
+      d.extraImageAssetIds.push(asset._id);
+      await setSession(chatId, session);
+      const count = d.extraImageAssetIds.length;
+      await tell(
+        chatId,
+        `✓ ${count + 1}. görsel eklendi. Toplam <b>${count + 1}</b>.\n\n<i>Devam et veya /devam ile sonraki adıma geç.</i>`,
+      );
       return;
     }
 
@@ -763,6 +810,7 @@ async function publishFromSession(
         city: d.city || "Eskişehir",
         descriptionText: d.description || d.title!,
         mainImageAssetId: d.mainImageAssetId,
+        galleryImageAssetIds: d.extraImageAssetIds,
         tags: d.tags,
         metaTitle: d.metaTitle,
         metaDescription: d.metaDescription,
@@ -781,6 +829,7 @@ async function publishFromSession(
         authorRef: d.authorRef,
         categoryRef: d.categoryRef,
         mainImageAssetId: d.mainImageAssetId,
+        galleryImageAssetIds: d.extraImageAssetIds,
         altText: d.altText,
         excerpt: d.excerpt,
         tags: d.tags,

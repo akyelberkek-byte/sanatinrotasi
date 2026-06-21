@@ -48,6 +48,8 @@ export interface SessionData {
   slug?: string;
   mainImageAssetId?: string;
   mainImageUrl?: string; // önizleme için
+  /** Birden fazla görsel — ilki main, kalan body'nin sonunda galeri olarak görünür */
+  extraImageAssetIds?: string[];
   tags?: string[];
   metaTitle?: string;
   metaDescription?: string;
