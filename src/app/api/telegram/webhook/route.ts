@@ -853,7 +853,11 @@ export async function POST(req: NextRequest) {
   }
   try {
     const update = await req.json();
-    handleUpdate(update).catch((e) =>
+    // ÖNEMLİ: serverless function response döndüğünde runtime kapanır.
+    // Eskiden handleUpdate(...).catch fire-and-forget'tı → sendMessage
+    // tamamlanmadan function ölüyordu, mesaj kullanıcıya ulaşmıyordu.
+    // Şimdi await — Telegram 60sn timeout veriyor, bizim işimiz <2sn.
+    await handleUpdate(update).catch((e) =>
       captureError(e, { route: "telegram-webhook" }),
     );
   } catch (e) {
