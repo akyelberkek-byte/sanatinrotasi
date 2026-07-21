@@ -211,7 +211,11 @@ export async function POST(request: NextRequest) {
 
     await resend.emails.send({
       from: "Sanatın Rotası İletişim <iletisim@sanatinrotasi.com>",
-      to: ["akyelberke@gmail.com", "ssanatinrotasii@gmail.com"],
+      to: [
+        "akyelberke@gmail.com",
+        "ssanatinrotasii@gmail.com",
+        "bilgi@sanatinrotasi.com",
+      ],
       subject: `İletişim Formu: ${subject}`,
       replyTo: email,
       html: `
