@@ -163,7 +163,11 @@ export async function POST(request: NextRequest) {
       }),
       resend.emails.send({
         from: "Sanatın Rotası <noreply@sanatinrotasi.com>",
-        to: ["ssanatinrotasii@gmail.com", "akyelberke@gmail.com"],
+        to: [
+          "ssanatinrotasii@gmail.com",
+          "akyelberke@gmail.com",
+          "bilgi@sanatinrotasi.com",
+        ],
         subject: `Yeni bülten abonesi: ${normalizedEmail}`,
         html: `
           <div style="font-family: Georgia, serif; max-width: 500px; padding: 20px; color: #1a1a18;">
