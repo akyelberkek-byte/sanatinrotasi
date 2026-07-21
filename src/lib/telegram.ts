@@ -3,6 +3,8 @@
  * Webhook endpoint'inden çağrılır.
  */
 
+import { captureError } from "@/lib/observability";
+
 const API = (token: string) => `https://api.telegram.org/bot${token}`;
 
 export interface InlineButton {
@@ -24,24 +26,59 @@ export async function sendTelegramMessage(
   text: string,
   opts: SendMessageOpts = {},
 ): Promise<void> {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const body: any = {
-      chat_id: chatId,
-      text,
-      parse_mode: opts.parseMode || "HTML",
-      disable_web_page_preview: opts.disablePreview ?? false,
-    };
-    if (opts.inlineKeyboard) {
-      body.reply_markup = { inline_keyboard: opts.inlineKeyboard };
-    }
-    await fetch(`${API(token)}/sendMessage`, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body: any = {
+    chat_id: chatId,
+    text,
+    parse_mode: opts.parseMode || "HTML",
+    disable_web_page_preview: opts.disablePreview ?? false,
+  };
+  if (opts.inlineKeyboard) {
+    body.reply_markup = { inline_keyboard: opts.inlineKeyboard };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function post(payload: any): Promise<{ ok: boolean; description?: string }> {
+    const res = await fetch(`${API(token)}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
-  } catch {
-    /* swallow — webhook'u kırma */
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.ok) {
+      return {
+        ok: false,
+        description: data?.description || `HTTP ${res.status}`,
+      };
+    }
+    return { ok: true };
+  }
+
+  try {
+    const first = await post(body);
+    if (first.ok) return;
+
+    // HTML parse hatası → parse_mode olmadan bir kez daha dene
+    if (/can't parse entities/i.test(first.description || "")) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const plain: any = { ...body };
+      delete plain.parse_mode;
+      const retry = await post(plain);
+      if (retry.ok) return;
+      captureError(
+        new Error(`Telegram sendMessage failed (retry): ${retry.description}`),
+        { route: "telegram-sendMessage", chatId },
+      );
+      return;
+    }
+
+    captureError(
+      new Error(`Telegram sendMessage failed: ${first.description}`),
+      { route: "telegram-sendMessage", chatId },
+    );
+  } catch (e) {
+    // swallow — webhook'u kırma, ama sessizce kaybetme
+    captureError(e, { route: "telegram-sendMessage", chatId });
   }
 }
 

@@ -34,10 +34,13 @@ export default hasClerkKeys
   : fallbackMiddleware;
 
 // Matcher:
-// - Tüm sayfa route'ları (statik asset'ler hariç)
-// - Sadece AUTH GEREKEN API'lar: /api/comments/:path, /api/favorites/:path
-//   → diğer API'lar (revalidate webhook, search, contact, newsletter,
-//      draft-mode) Clerk overhead'ı olmadan çalışır.
+// - İlk pattern uzantısı olmayan TÜM path'leri yakalar; /api/* de buna dahil,
+//   yani her API isteği de clerkMiddleware'den geçiyor. Sadece isProtectedRoute
+//   ile eşleşenlerde auth.protect() çalıştığı için diğer API'lar (revalidate
+//   webhook, search, contact, newsletter, draft-mode) auth zorunluluğu olmadan
+//   çalışmaya devam ediyor.
+// - Sonraki iki satır /api/comments ve /api/favorites'i açıkça kapsama alır
+//   (ilk pattern değişirse bu auth gerektiren API'lar dışarıda kalmasın diye).
 export const config = {
   matcher: [
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",

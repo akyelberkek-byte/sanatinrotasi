@@ -5,7 +5,8 @@ import { captureError } from "@/lib/observability";
 import { writeClient } from "@/sanity/writeClient";
 import { client } from "@/sanity/client";
 import { groq } from "next-sanity";
-import { createHash } from "crypto";
+import { SITE_URL } from "@/lib/constants";
+import { createHash, createHmac } from "crypto";
 
 // Email'den deterministic Sanity document ID üret.
 // Sanity'de aynı _id ile create denemesi atomic biçimde unique olur
@@ -16,7 +17,29 @@ function emailToDocId(email: string): string {
   return `subscriber-${hash}`;
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Resend'i lazy oluştur — RESEND_API_KEY yoksa constructor throw ediyor ve
+// `next build` "Collecting page data" aşamasında patlıyordu (CI/preview build'leri).
+function getResend(): Resend | null {
+  const key = process.env.RESEND_API_KEY;
+  return key ? new Resend(key) : null;
+}
+
+/**
+ * Abonelikten çıkma linki için imzalı token.
+ * (Aynı hesaplama /api/newsletter/unsubscribe içinde de var.)
+ */
+function unsubscribeToken(email: string): string {
+  const secret = process.env.CRON_SECRET || "";
+  return createHmac("sha256", secret).update(email).digest("hex").slice(0, 32);
+}
+
+function unsubscribeUrl(email: string): string {
+  const params = new URLSearchParams({
+    email,
+    token: unsubscribeToken(email),
+  });
+  return `${SITE_URL}/api/newsletter/unsubscribe?${params.toString()}`;
+}
 
 export const runtime = "nodejs";
 
@@ -118,9 +141,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Ne yeni kayıt oluştu ne de mevcut kaydı okuyabildik → kayıt YOK.
+    // Eskiden burada "zaten abonesiniz" denip success dönülüyordu: sessiz veri kaybı.
+    if (existingDoc === null && !isNewSubscriber) {
+      return NextResponse.json(
+        { error: "Kayıt yapılamadı, lütfen tekrar deneyin." },
+        { status: 500 }
+      );
+    }
+
     if (!isNewSubscriber) {
       // Tekrar tıklayan kullanıcıya başarılı dön ama mail GÖNDERMİYORUZ.
-      // Deaktif idiyse tekrar aktif et.
+      // Daha önce abonelikten çıkmışsa (active: false) tekrar aktif et.
       if (existingDoc && existingDoc.active === false) {
         try {
           await writeClient
@@ -137,9 +169,26 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 3) Hoşgeldin maili + admin bildirimi (paralel)
-    await Promise.all([
+    // 3) Hoşgeldin maili + admin bildirimi (paralel, best effort).
+    //    Abone kaydı zaten yapıldı; mail hatası isteği 500'e düşürmemeli.
+    const resend = getResend();
+    if (!resend) {
+      captureError(
+        new Error("RESEND_API_KEY tanımlı değil — bülten mailleri gönderilemedi"),
+        { route: "/api/newsletter" }
+      );
+      return NextResponse.json({ success: true });
+    }
+
+    const unsubUrl = unsubscribeUrl(normalizedEmail);
+    const listUnsubscribeHeaders = {
+      "List-Unsubscribe": `<${unsubUrl}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    };
+
+    const results = await Promise.allSettled([
       resend.emails.send({
+        headers: listUnsubscribeHeaders,
         from: "Sanatın Rotası <noreply@sanatinrotasi.com>",
         to: normalizedEmail,
         subject: "Rotaya Hoş Geldiniz!",
@@ -156,12 +205,18 @@ export async function POST(request: NextRequest) {
             </p>
             <hr style="border: none; border-top: 1px solid #ebe6db; margin: 20px 0;" />
             <p style="font-size: 12px; color: #b8b0a2;">
+              Bülteni artık almak istemiyorsanız
+              <a href="${escapeHtml(unsubUrl)}" style="color: #b8b0a2;">buradan abonelikten çıkabilirsiniz</a>.
+            </p>
+            <p style="font-size: 12px; color: #b8b0a2;">
               © 2026 Sanatın Rotası — Tüm hakları saklıdır.
             </p>
           </div>
         `,
       }),
       resend.emails.send({
+        headers: listUnsubscribeHeaders,
+        replyTo: normalizedEmail,
         from: "Sanatın Rotası <noreply@sanatinrotasi.com>",
         to: [
           "ssanatinrotasii@gmail.com",
@@ -186,6 +241,20 @@ export async function POST(request: NextRequest) {
         `,
       }),
     ]);
+
+    // Gönderilemeyen mailleri logla — kullanıcıya yine 200 dön (kayıt yapıldı).
+    const phases = ["welcomeEmail", "adminNotification"] as const;
+    results.forEach((r, i) => {
+      if (r.status === "rejected") {
+        captureError(r.reason, { route: "/api/newsletter", phase: phases[i] });
+      } else if (r.value?.error) {
+        // Resend throw etmez, hatayı response içinde döner
+        captureError(r.value.error, {
+          route: "/api/newsletter",
+          phase: phases[i],
+        });
+      }
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

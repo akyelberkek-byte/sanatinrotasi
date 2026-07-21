@@ -2,6 +2,7 @@ import { article } from "./article";
 import { author } from "./author";
 import { category } from "./category";
 import { comment } from "./comment";
+import { contactMessage } from "./contactMessage";
 import { dailyArtwork } from "./dailyArtwork";
 import { event } from "./event";
 import { newsletterSubscriber } from "./newsletterSubscriber";
@@ -19,6 +20,7 @@ export const schemaTypes = [
   author,
   category,
   comment,
+  contactMessage,
   dailyArtwork,
   event,
   newsletterSubscriber,

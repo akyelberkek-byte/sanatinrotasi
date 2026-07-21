@@ -23,6 +23,17 @@ interface Props {
  * - Marker'lar custom: küçük accent renkli numaralı daireler
  */
 
+// Studio'dan gelen metinler popup HTML'ine gömülüyor; entity'e çevirerek
+// hem bozuk render'ı hem de stored-XSS ihtimalini engelle.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // Custom numbered marker (HTML divIcon)
 function numberedIcon(num: number): L.DivIcon {
   return L.divIcon({
@@ -87,8 +98,8 @@ export default function RouteMap({ stops, city }: Props) {
       const html = `
         <div style="font-family: var(--font-urbane), Urbanist, sans-serif; max-width:220px;">
           <div style="font-size:0.6rem; text-transform:uppercase; letter-spacing:0.15em; color:#9A1F25; margin-bottom:4px;">Durak ${i + 1}</div>
-          <div style="font-weight:700; font-size:1rem; line-height:1.2; color:#1a1a18;">${s.name}</div>
-          ${s.description ? `<div style="font-size:0.85rem; color:#2d2b28; margin-top:6px; line-height:1.4;">${s.description.slice(0, 200)}</div>` : ""}
+          <div style="font-weight:700; font-size:1rem; line-height:1.2; color:#1a1a18;">${escapeHtml(s.name ?? "")}</div>
+          ${s.description ? `<div style="font-size:0.85rem; color:#2d2b28; margin-top:6px; line-height:1.4;">${escapeHtml(s.description.slice(0, 200))}</div>` : ""}
         </div>
       `;
       m.bindPopup(html);
@@ -143,7 +154,7 @@ export default function RouteMap({ stops, city }: Props) {
       />
       {validCount < stops.length && (
         <p className="font-sans text-[0.65rem] text-warm-gray mt-2">
-          Not: {stops.length - validCount} durağın konumu Sanity'de tanımlanmamış,
+          Not: {stops.length - validCount} durağın konumu Sanity&apos;de tanımlanmamış,
           haritada görünmüyor.
         </p>
       )}

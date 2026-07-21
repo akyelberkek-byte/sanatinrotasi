@@ -64,6 +64,15 @@ export const structure: StructureResolver = (S) =>
             .defaultOrdering([{ field: "subscribedAt", direction: "desc" }])
         ),
 
+      S.listItem()
+        .title("İletişim Mesajları")
+        .schemaType("contactMessage")
+        .child(
+          S.documentTypeList("contactMessage")
+            .title("İletişim Mesajları")
+            .defaultOrdering([{ field: "createdAt", direction: "desc" }])
+        ),
+
       S.divider(),
 
       // Yönetim

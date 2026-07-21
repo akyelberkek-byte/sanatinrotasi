@@ -3,13 +3,16 @@ import Image from "next/image";
 import { urlFor } from "@/sanity/image";
 import { turkishSlugify } from "@/sanity/lib/slugify";
 
+// Sanity görsel alanı — asset yoksa urlFor boş string döner, guard'lar .asset'e bakar
+type SanityImage = { asset?: unknown; alt?: string };
+
 interface ArticleCardProps {
   article: {
     title: string;
     slug: { current: string };
     publishedAt: string;
     excerpt?: string;
-    mainImage?: any;
+    mainImage?: SanityImage;
     author?: { name: string };
     category?: { title: string; slug: { current: string }; color?: string };
   };
@@ -30,7 +33,7 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
       href={`/yazilar/${turkishSlugify(article.slug?.current || "")}`}
       className={`group block ${featured ? "" : "border-t-2 border-ink pt-4"}`}
     >
-      {article.mainImage && (
+      {!!article.mainImage?.asset && (
         <div className="relative overflow-hidden mb-4 aspect-[16/10]">
           <Image
             src={urlFor(article.mainImage).width(800).height(500).url()}

@@ -33,7 +33,7 @@ export default function ContentCard({ item, featured = false }: ContentCardProps
       href={href}
       className={`group block ${featured ? "" : "border-t-2 border-ink pt-4"}`}
     >
-      {item.mainImage && (
+      {item.mainImage?.asset && (
         <div className="relative overflow-hidden mb-4 aspect-[16/10]">
           <Image
             src={urlFor(item.mainImage).width(800).height(500).url()}

@@ -10,7 +10,8 @@ const csp = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://*.accounts.dev https://clerk.sanatinrotasi.com https://accounts.sanatinrotasi.com https://challenges.cloudflare.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://cdn.sanity.io https://img.clerk.com https://images.clerk.dev https://*.clerk.com https://*.vercel-insights.com",
+  // basemaps.cartocdn.com: RouteMap (Leaflet) harita tile'ları — olmazsa harita boş kalır
+  "img-src 'self' data: blob: https://cdn.sanity.io https://img.clerk.com https://images.clerk.dev https://*.clerk.com https://*.vercel-insights.com https://*.basemaps.cartocdn.com",
   "media-src 'self' https://cdn.sanity.io",
   // Clerk prod ek: clerk-telemetry.com (user behavior telemetry), accounts.sanatinrotasi.com (prod hosted UI), *.accounts.dev wildcard
   "connect-src 'self' https://cdn.sanity.io https://*.api.sanity.io https://*.apicdn.sanity.io https://*.clerk.accounts.dev https://*.clerk.com https://*.accounts.dev https://clerk.sanatinrotasi.com https://accounts.sanatinrotasi.com https://clerk-telemetry.com https://*.clerk-telemetry.com https://api.resend.com https://vitals.vercel-insights.com https://*.vercel-insights.com https://vercel.live wss://*.pusher.com",

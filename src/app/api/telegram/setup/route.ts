@@ -50,14 +50,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(await r.json());
     }
     if (action === "set") {
+      // Webhook artık secret olmadan istek kabul etmiyor — kurulumda da zorunlu
+      if (!WEBHOOK_SECRET) {
+        return NextResponse.json(
+          { error: "TELEGRAM_WEBHOOK_SECRET not configured" },
+          { status: 503 },
+        );
+      }
       const params = new URLSearchParams({
         url: webhookUrl,
         max_connections: "10",
-        allowed_updates: JSON.stringify([
-          "message",
-          "edited_message",
-          "callback_query",
-        ]),
+        // edited_message bilinçli olarak yok — düzenlenen mesaj akışı bozuyor
+        allowed_updates: JSON.stringify(["message", "callback_query"]),
         drop_pending_updates: "true",
       });
       if (WEBHOOK_SECRET) params.append("secret_token", WEBHOOK_SECRET);

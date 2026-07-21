@@ -7,6 +7,7 @@ import { writeClient } from "@/sanity/writeClient";
 import { client } from "@/sanity/client";
 import { turkishSlugify } from "@/sanity/lib/slugify";
 import { groq } from "next-sanity";
+import { captureError } from "@/lib/observability";
 
 const SITE_URL = "https://sanatinrotasi.com";
 
@@ -63,7 +64,7 @@ export async function uploadImageAsset(
     })) as { _id: string; url: string };
     return result?._id ? { _id: result._id, url: result.url } : null;
   } catch (e) {
-    console.error("Image upload failed:", e);
+    captureError(e, { route: "sanity-asset-upload", filename, type });
     return null;
   }
 }
@@ -89,7 +90,8 @@ export async function findCategoryBySlug(
 export async function listCategories(): Promise<
   Array<{ _id: string; title: string; slug: string }>
 > {
-  const cats = await client
+  // writeClient (useCdn:false) — Studio'da yeni eklenen kategori anında görünsün
+  const cats = await writeClient
     .fetch<Array<{ _id: string; title: string; slug: { current: string } }>>(
       groq`*[_type=="category" && defined(slug.current)] | order(order asc, title asc) {_id, title, slug}`,
       {},
@@ -103,7 +105,8 @@ export async function listCategories(): Promise<
 export async function listAuthors(): Promise<
   Array<{ _id: string; name: string }>
 > {
-  const authors = await client
+  // writeClient (useCdn:false) — yeni eklenen yazar anında görünsün
+  const authors = await writeClient
     .fetch<Array<{ _id: string; name: string }>>(
       groq`*[_type=="author"] | order(featured desc, name asc) {_id, name}`,
       {},
@@ -113,20 +116,33 @@ export async function listAuthors(): Promise<
   return authors;
 }
 
-/** Slug çakışmasını kontrol et ve gerekirse rastgele suffix ekle. */
+/**
+ * Slug çakışmasını kontrol et ve gerekirse rastgele suffix ekle.
+ * writeClient kullanılır (useCdn:false) — az önce yayımlanan slug da görülsün.
+ * Suffix'li slug da çakışabilir; boş bulunana kadar max 5 deneme.
+ */
 async function uniqueSlugForType(
   type: string,
   baseSlug: string,
 ): Promise<string> {
-  const existing = await client
-    .fetch<{ _id: string } | null>(
-      groq`*[_type==$type && slug.current==$slug][0]{_id}`,
-      { type, slug: baseSlug },
-      { cache: "no-store" },
-    )
-    .catch(() => null);
-  if (!existing) return baseSlug;
-  return `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+  const exists = async (slug: string): Promise<boolean> => {
+    const found = await writeClient
+      .fetch<{ _id: string } | null>(
+        groq`*[_type==$type && slug.current==$slug][0]{_id}`,
+        { type, slug },
+        { cache: "no-store" },
+      )
+      .catch(() => null);
+    return !!found;
+  };
+
+  let candidate = baseSlug;
+  for (let i = 0; i < 5; i++) {
+    if (!(await exists(candidate))) return candidate;
+    candidate = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+  }
+  // 5 denemede de boş slug bulunamadıysa zaman damgalı fallback
+  return `${baseSlug}-${Date.now().toString(36)}`;
 }
 
 /* ============================================================

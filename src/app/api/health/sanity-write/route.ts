@@ -9,7 +9,7 @@ export const runtime = "nodejs";
  * Sanity write token sağlık kontrolü.
  *
  * Çalışma şekli:
- * - Vercel Cron her gün sabah (8:00 UTC) bu endpoint'e POST atar
+ * - Vercel Cron her gün sabah (8:00 UTC) bu endpoint'e GET isteği atar
  * - Sanity API /users/me endpoint'i tokenı doğrular (write mutation YAPMAZ — kirletmez)
  * - 200 dönerse token sağlıklı, sessizce success kaydeder
  * - 401/403 dönerse → Resend ile akyelberke@gmail.com + ssanatinrotasii@gmail.com'a alarm maili
@@ -17,10 +17,12 @@ export const runtime = "nodejs";
  *
  * Güvenlik:
  * - Vercel Cron otomatik CRON_SECRET header'ı ekler
- * - Manuel test için ?secret=... query parametresi ile de çağrılabilir
+ * - Secret SADECE Authorization header'ı ile kabul edilir. Query string'deki
+ *   secret erişim loglarına düz metin yazıldığı için desteklenmiyor.
  *
  * Manuel test:
- *   curl https://sanatinrotasi.com/api/health/sanity-write?secret=<CRON_SECRET>
+ *   curl -H "Authorization: Bearer <CRON_SECRET>" \
+ *     https://sanatinrotasi.com/api/health/sanity-write
  */
 
 const PROJECT_ID =
@@ -34,15 +36,9 @@ function isAuthorized(request: NextRequest): boolean {
     return process.env.NODE_ENV !== "production";
   }
 
-  // Vercel Cron Authorization: Bearer <secret>
+  // Sadece Authorization: Bearer <secret> — query string log'lara sızıyor
   const authHeader = request.headers.get("authorization");
-  if (authHeader === `Bearer ${cronSecret}`) return true;
-
-  // Manuel test için query param
-  const querySecret = request.nextUrl.searchParams.get("secret");
-  if (querySecret === cronSecret) return true;
-
-  return false;
+  return authHeader === `Bearer ${cronSecret}`;
 }
 
 async function sendAlertEmail(reason: string, details: string) {

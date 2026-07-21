@@ -19,14 +19,19 @@ import {
   setSession,
   clearSession,
   newSession,
+  pushExtraImage,
+  getExtraImages,
+  clearExtraImages,
+  markUpdateSeen,
+  sessionStorageEnabled,
   Session,
-  SessionData,
   ContentType,
 } from "@/lib/telegramSession";
 import { turkishSlugify } from "@/sanity/lib/slugify";
 import { captureError } from "@/lib/observability";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const SECRET = process.env.TELEGRAM_WEBHOOK_SECRET;
@@ -34,6 +39,9 @@ const ALLOWED_IDS = (process.env.TELEGRAM_ALLOWED_USER_IDS || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+
+/** Telegram Bot API dosya indirme sınırı ile uyumlu üst sınır */
+const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB
 
 /* ============================================================
    HELPER'lar
@@ -44,6 +52,59 @@ async function tell(chatId: number, text: string, keyboard?: InlineButton[][]) {
   await sendTelegramMessage(TOKEN, chatId, text, {
     inlineKeyboard: keyboard,
   });
+}
+
+/** Oturumu ve ona bağlı görsel listesini birlikte temizler. */
+async function clearAll(chatId: number): Promise<void> {
+  await clearSession(chatId);
+  await clearExtraImages(chatId);
+}
+
+/**
+ * Oturumu kaydeder. Başarısızsa kullanıcıyı uyarır ve false döner —
+ * çağıran taraf bir sonraki adıma GEÇMEMELİ.
+ */
+async function saveSession(chatId: number, session: Session): Promise<boolean> {
+  const ok = await setSession(chatId, session);
+  if (!ok) {
+    captureError(new Error("Telegram session kaydedilemedi"), {
+      route: "telegram-session-save",
+      chatId,
+      step: session.step,
+    });
+    await tell(
+      chatId,
+      "⚠️ Oturum kaydedilemedi, lütfen mesajını tekrar gönder.",
+    );
+  }
+  return ok;
+}
+
+/**
+ * Ek görsel sayısı — önce Redis listesi, o boşsa session içindeki fallback.
+ */
+async function countExtras(chatId: number, session: Session): Promise<number> {
+  const list = await getExtraImages(chatId);
+  if (list.length > 0) return list.length;
+  return session.data.extraImageAssetIds?.length || 0;
+}
+
+/** Ek görsellerin nihai listesi (yayımlarken kullanılır). */
+async function resolveExtras(
+  chatId: number,
+  session: Session,
+): Promise<string[]> {
+  const list = await getExtraImages(chatId);
+  if (list.length > 0) return list;
+  return session.data.extraImageAssetIds || [];
+}
+
+/** Temiz bir oturum başlat (önceki her şeyi siler). */
+async function startNewSession(chatId: number): Promise<void> {
+  await clearExtraImages(chatId);
+  const s = newSession();
+  if (!(await saveSession(chatId, s))) return;
+  await askStep(chatId, s);
 }
 
 function helpText(): string {
@@ -65,29 +126,40 @@ function helpText(): string {
 <i>Bot Sanatın Rotası ekibine özeldir.</i>`;
 }
 
-function statusText(session: Session): string {
+function statusText(session: Session, extrasCount: number): string {
   const d = session.data;
   const typeName = session.type === "rota" ? "Sanat Rotası" : session.type === "yazi" ? "Yazı" : "Tip seçilmedi";
   const filled: string[] = [];
   if (d.title) filled.push("Başlık");
   if (d.slug) filled.push("Slug");
   if (d.subtitle) filled.push("Alt başlık");
-  if (d.city) filled.push(`Şehir (${d.city})`);
-  if (d.authorName) filled.push(`Yazar (${d.authorName})`);
-  if (d.categoryTitle) filled.push(`Kategori (${d.categoryTitle})`);
+  if (d.city) filled.push(`Şehir (${escapeHtml(d.city)})`);
+  if (d.authorName) filled.push(`Yazar (${escapeHtml(d.authorName)})`);
+  if (d.categoryTitle) filled.push(`Kategori (${escapeHtml(d.categoryTitle)})`);
   if (d.mainImageAssetId) {
-    const extras = d.extraImageAssetIds?.length || 0;
-    filled.push(extras > 0 ? `Ana görsel ✓ (+${extras} galeri)` : "Ana görsel ✓");
+    filled.push(
+      extrasCount > 0 ? `Ana görsel ✓ (+${extrasCount} galeri)` : "Ana görsel ✓",
+    );
   }
   if (d.altText) filled.push("Alt metin");
-  if (d.description) filled.push("Açıklama");
+  if (d.description) filled.push(`Açıklama (${d.description.length} karakter)`);
   if (d.excerpt) filled.push("Özet");
-  if (d.content) filled.push("İçerik");
+  if (d.content) filled.push(`İçerik (${d.content.length} karakter)`);
   if (d.tags?.length) filled.push(`Etiketler (${d.tags.length})`);
   if (d.metaTitle) filled.push("Meta başlık");
   if (d.metaDescription) filled.push("Meta açıklama");
   if (d.ogImageAssetId) filled.push("OG görsel ✓");
-  return `<b>📊 Mevcut Oturum</b>\n\n<b>Tip:</b> ${typeName}\n<b>Şu anki adım:</b> <code>${session.step}</code>\n\n<b>Dolu alanlar:</b>\n${filled.length ? filled.map((f) => `• ${f}`).join("\n") : "(henüz boş)"}\n\nİptal için /iptal`;
+  return `<b>📊 Mevcut Oturum</b>\n\n<b>Tip:</b> ${typeName}\n<b>Şu anki adım:</b> <code>${escapeHtml(session.step)}</code>\n${sessionAgeText(session)}\n\n<b>Dolu alanlar:</b>\n${filled.length ? filled.map((f) => `• ${f}`).join("\n") : "(henüz boş)"}\n\nİptal için /iptal`;
+}
+
+/** "⏱️ Bu oturum X önce başladı" satırı */
+function sessionAgeText(session: Session): string {
+  const ms = Date.now() - (session.startedAt || Date.now());
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 1) return "⏱️ Bu oturum az önce başladı.";
+  if (minutes < 60) return `⏱️ Bu oturum ${minutes} dakika önce başladı.`;
+  const hours = Math.floor(minutes / 60);
+  return `⏱️ Bu oturum ${hours} saat önce başladı.`;
 }
 
 function escapeHtml(s: string): string {
@@ -103,6 +175,21 @@ function escapeHtml(s: string): string {
 function hasImage(msg: any): boolean {
   if (Array.isArray(msg.photo) && msg.photo.length > 0) return true;
   if (msg.document?.mime_type?.startsWith?.("image/")) return true;
+  return false;
+}
+
+/**
+ * Gelen görselin boyutu limitin üstünde mi? (indirmeden önce kontrol)
+ * Telegram photo/document nesnesi file_size veriyor; yoksa kontrol atlanır.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isTooLarge(msg: any): boolean {
+  if (msg.document?.file_size && msg.document.file_size > MAX_FILE_BYTES)
+    return true;
+  if (Array.isArray(msg.photo) && msg.photo.length > 0) {
+    const largest = msg.photo[msg.photo.length - 1];
+    if (largest?.file_size && largest.file_size > MAX_FILE_BYTES) return true;
+  }
   return false;
 }
 
@@ -193,6 +280,7 @@ function nextStep(type: ContentType, current: string): string | null {
 async function askStep(
   chatId: number,
   session: Session,
+  extrasCount = 0,
 ): Promise<void> {
   const step = session.step;
   const d = session.data;
@@ -222,7 +310,7 @@ async function askStep(
     case "CONFIRM_SLUG":
       await tell(
         chatId,
-        `🔗 URL şöyle olacak:\n<code>${d.slug}</code>\n\nOnayla veya yeniden gir.`,
+        `🔗 URL şöyle olacak:\n<code>${escapeHtml(d.slug || "")}</code>\n\nOnayla veya yeniden gir.`,
         [
           [
             { text: "✓ Onayla", callback_data: "slug:ok" },
@@ -250,7 +338,7 @@ async function askStep(
       const authors = await listAuthors();
       if (authors.length === 0) {
         await tell(chatId, "❌ Sanity'de yazar yok. Önce Studio'dan ekle.");
-        await clearSession(chatId);
+        await clearAll(chatId);
         return;
       }
       await tell(
@@ -267,7 +355,7 @@ async function askStep(
       const cats = await listCategories();
       if (cats.length === 0) {
         await tell(chatId, "❌ Sanity'de kategori yok. Önce Studio'dan ekle.");
-        await clearSession(chatId);
+        await clearAll(chatId);
         return;
       }
       await tell(
@@ -290,7 +378,7 @@ async function askStep(
     case "ASK_DESCRIPTION":
       await tell(
         chatId,
-        "📝 <b>Açıklama</b> metni? (paragrafları boş satırla ayır)",
+        "📝 <b>Açıklama</b> metnini gönder. (paragrafları boş satırla ayır)\n\n<i>Uzunsa birden fazla mesaj hâlinde gönderebilirsin. Bitince /devam yaz.</i>",
       );
       return;
 
@@ -311,7 +399,7 @@ async function askStep(
     case "ASK_CONTENT":
       await tell(
         chatId,
-        "📄 <b>İçerik / Body</b>? (asıl yazı metni, paragrafları boş satırla ayır)",
+        "📄 <b>İçerik / Body</b> — yazını gönder. (paragrafları boş satırla ayır)\n\n<i>Uzunsa birden fazla mesaj hâlinde gönderebilirsin. Bitince /devam yaz.</i>",
       );
       return;
 
@@ -344,7 +432,7 @@ async function askStep(
       return;
 
     case "CONFIRM_PUBLISH": {
-      const preview = formatPreview(session);
+      const preview = formatPreview(session, extrasCount);
       await tell(chatId, preview, [
         [
           { text: "🚀 Yayımla", callback_data: "publish:yes" },
@@ -360,7 +448,7 @@ async function askStep(
    Önizleme metni
    ============================================================ */
 
-function formatPreview(session: Session): string {
+function formatPreview(session: Session, extrasCount = 0): string {
   const d = session.data;
   const type =
     session.type === "rota" ? "Sanat Rotası" : "Yazı";
@@ -376,8 +464,7 @@ function formatPreview(session: Session): string {
       s += `<b>Kategori:</b> ${escapeHtml(d.categoryTitle)}\n`;
   }
   if (d.mainImageAssetId) {
-    const extras = d.extraImageAssetIds?.length || 0;
-    s += `<b>Ana görsel:</b> ✓${extras > 0 ? ` (+${extras} galeri görseli)` : ""}\n`;
+    s += `<b>Ana görsel:</b> ✓${extrasCount > 0 ? ` (+${extrasCount} galeri görseli)` : ""}\n`;
   }
   if (d.altText) s += `<b>Alt metin:</b> ${escapeHtml(d.altText.slice(0, 50))}\n`;
   if (session.type === "rota" && d.description)
@@ -386,7 +473,7 @@ function formatPreview(session: Session): string {
   if (d.content)
     s += `<b>İçerik:</b> ${d.content.length} karakter\n`;
   if (d.tags && d.tags.length > 0)
-    s += `<b>Etiketler:</b> ${d.tags.join(", ")}\n`;
+    s += `<b>Etiketler:</b> ${escapeHtml(d.tags.join(", "))}\n`;
   if (d.metaTitle) s += `<b>Meta başlık:</b> ${escapeHtml(d.metaTitle)}\n`;
   if (d.metaDescription)
     s += `<b>Meta açıklama:</b> ${escapeHtml(d.metaDescription.slice(0, 80))}…\n`;
@@ -406,12 +493,12 @@ async function handleMessage(chatId: number, msg: any): Promise<void> {
 
   // Komutlar
   if (text === "/start" || text === "/yardim" || text === "/help") {
-    await clearSession(chatId);
+    await clearAll(chatId);
     await tell(chatId, helpText());
     return;
   }
   if (text === "/iptal" || text === "/cancel") {
-    await clearSession(chatId);
+    await clearAll(chatId);
     await tell(chatId, "❌ İşlem iptal edildi. Yeni başlamak için /yeni");
     return;
   }
@@ -424,13 +511,34 @@ async function handleMessage(chatId: number, msg: any): Promise<void> {
       );
       return;
     }
-    await tell(chatId, statusText(s));
+    const extras = await countExtras(chatId, s);
+    await tell(chatId, statusText(s, extras));
     return;
   }
   if (text === "/yeni" || text === "/new") {
-    const s = newSession();
-    await setSession(chatId, s);
-    await askStep(chatId, s);
+    if (!sessionStorageEnabled) {
+      await tell(
+        chatId,
+        "⚠️ Bot şu an kullanılamıyor (depolama bağlantısı yok). Berke'ye haber ver.",
+      );
+      return;
+    }
+    // Yarım kalmış bir oturum varsa onay iste — kazara silinmesin
+    const existing = await getSession(chatId);
+    if (existing) {
+      await tell(
+        chatId,
+        `⚠️ <b>Devam eden bir iş var.</b>\n\n${sessionAgeText(existing)}\nAdım: <code>${escapeHtml(existing.step)}</code>${existing.data.title ? `\nBaşlık: ${escapeHtml(existing.data.title)}` : ""}\n\nSilinip yeniden başlansın mı?`,
+        [
+          [
+            { text: "🗑️ Evet, sıfırla", callback_data: "new:yes" },
+            { text: "↩️ Hayır, devam et", callback_data: "new:no" },
+          ],
+        ],
+      );
+      return;
+    }
+    await startNewSession(chatId);
     return;
   }
 
@@ -459,7 +567,7 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
       d.title = text.slice(0, 200);
       d.slug = turkishSlugify(d.title).slice(0, 96);
       session.step = "CONFIRM_SLUG";
-      await setSession(chatId, session);
+      if (!(await saveSession(chatId, session))) return;
       await askStep(chatId, session);
       return;
     }
@@ -479,7 +587,7 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
       }
       d.slug = slugged;
       session.step = "CONFIRM_SLUG";
-      await setSession(chatId, session);
+      if (!(await saveSession(chatId, session))) return;
       await askStep(chatId, session);
       return;
     }
@@ -522,8 +630,7 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
           );
           return;
         }
-        const total =
-          1 + (d.extraImageAssetIds?.length || 0);
+        const total = 1 + (await countExtras(chatId, session));
         await tell(
           chatId,
           `✓ Toplam <b>${total}</b> görsel kaydedildi. Sonraki adıma geçiyorum.`,
@@ -540,6 +647,14 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
         return;
       }
 
+      if (isTooLarge(msg)) {
+        await tell(
+          chatId,
+          "❌ Görsel çok büyük (max 20 MB). Daha küçük bir dosya gönder.",
+        );
+        return;
+      }
+
       await sendChatAction(TOKEN!, chatId, "upload_photo");
       const asset = await uploadPhotoFromMessage(msg);
       if (!asset) {
@@ -551,7 +666,7 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
         // İlk görsel — ana görsel olur
         d.mainImageAssetId = asset._id;
         d.mainImageUrl = asset.url;
-        await setSession(chatId, session);
+        if (!(await saveSession(chatId, session))) return;
         await tell(
           chatId,
           "✓ Ana görsel kaydedildi.\n\n<i>Başka görsel eklemek için yeni fotoğraf gönder, bitirmek için /devam yaz.</i>",
@@ -559,11 +674,20 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
         return;
       }
 
-      // İkinci ve sonraki görseller — galeri
-      if (!d.extraImageAssetIds) d.extraImageAssetIds = [];
-      d.extraImageAssetIds.push(asset._id);
-      await setSession(chatId, session);
-      const count = d.extraImageAssetIds.length;
+      // İkinci ve sonraki görseller — galeri.
+      // Redis list'e atomik RPUSH: Ela 5 fotoğrafı aynı anda gönderdiğinde
+      // paralel çalışan istekler birbirinin üzerine yazmasın.
+      const pushed = await pushExtraImage(chatId, asset._id);
+      let count: number;
+      if (pushed >= 0) {
+        count = pushed;
+      } else {
+        // Redis yok → eski session fallback'i
+        if (!d.extraImageAssetIds) d.extraImageAssetIds = [];
+        d.extraImageAssetIds.push(asset._id);
+        if (!(await saveSession(chatId, session))) return;
+        count = d.extraImageAssetIds.length;
+      }
       await tell(
         chatId,
         `✓ ${count + 1}. görsel eklendi. Toplam <b>${count + 1}</b>.\n\n<i>Devam et veya /devam ile sonraki adıma geç.</i>`,
@@ -572,15 +696,32 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_DESCRIPTION": {
-      if (!text || text.length < 10) {
+      // Uzun metin Telegram'ın 4096 karakter sınırında bölünebiliyor —
+      // gelen her mesajı birikime ekle, /devam gelene kadar bekle.
+      if (text === "/devam" || text === "/tamam") {
+        if (!d.description || d.description.length < 10) {
+          await tell(
+            chatId,
+            "📝 Açıklama en az 10 karakter olmalı. Önce metni gönder.",
+          );
+          return;
+        }
+        await advance(chatId, session);
+        return;
+      }
+      if (!text) {
         await tell(
           chatId,
-          "📝 Açıklama en az 10 karakter olmalı. Metin gönder.",
+          "📝 Açıklama metnini gönder. Bitince /devam yaz.",
         );
         return;
       }
-      d.description = text;
-      await advance(chatId, session);
+      d.description = d.description ? `${d.description}\n\n${text}` : text;
+      if (!(await saveSession(chatId, session))) return;
+      await tell(
+        chatId,
+        `✓ Eklendi (toplam ${d.description.length} karakter). Devam et veya /devam yaz.`,
+      );
       return;
     }
 
@@ -605,15 +746,31 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     }
 
     case "ASK_CONTENT": {
-      if (!text || text.length < 20) {
+      // Uzun yazı birden çok mesaja bölünebilir — birikimli topla.
+      if (text === "/devam" || text === "/tamam") {
+        if (!d.content || d.content.length < 20) {
+          await tell(
+            chatId,
+            "📄 İçerik en az 20 karakter olmalı. Önce yazıyı gönder.",
+          );
+          return;
+        }
+        await advance(chatId, session);
+        return;
+      }
+      if (!text) {
         await tell(
           chatId,
-          "📄 İçerik en az 20 karakter olmalı. Yazıyı metin olarak gönder.",
+          "📄 Yazını metin olarak gönder. Bitince /devam yaz.",
         );
         return;
       }
-      d.content = text;
-      await advance(chatId, session);
+      d.content = d.content ? `${d.content}\n\n${text}` : text;
+      if (!(await saveSession(chatId, session))) return;
+      await tell(
+        chatId,
+        `✓ Eklendi (toplam ${d.content.length} karakter). Devam et veya /devam yaz.`,
+      );
       return;
     }
 
@@ -663,6 +820,13 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
     case "ASK_OG_IMAGE": {
       // Photo geldiyse, caption'daki "geç" göz ardı edilir — görsel önceliklidir
       if (hasImage(msg)) {
+        if (isTooLarge(msg)) {
+          await tell(
+            chatId,
+            "❌ Görsel çok büyük (max 20 MB). Daha küçük bir dosya gönder.",
+          );
+          return;
+        }
         await sendChatAction(TOKEN!, chatId, "upload_photo");
         const asset = await uploadPhotoFromMessage(msg);
         if (!asset) {
@@ -688,6 +852,14 @@ async function processStep(chatId: number, session: Session, msg: any, text: str
       return;
     }
 
+    case "ASK_TYPE":
+    case "ASK_AUTHOR":
+    case "ASK_CATEGORY":
+      // Bu adımlar buton bekliyor — metin gelirse sessiz kalma, butonları tekrar göster
+      await tell(chatId, "👆 Lütfen yukarıdaki butonlardan birini seç.");
+      await askStep(chatId, session);
+      return;
+
     case "CONFIRM_PUBLISH":
       await tell(
         chatId,
@@ -704,12 +876,14 @@ async function advance(chatId: number, session: Session): Promise<void> {
   const next = session.type ? nextStep(session.type, session.step) : null;
   if (!next) {
     await tell(chatId, "Bir hata oluştu. /yeni ile tekrar başla.");
-    await clearSession(chatId);
+    await clearAll(chatId);
     return;
   }
   session.step = next as Session["step"];
-  await setSession(chatId, session);
-  await askStep(chatId, session);
+  if (!(await saveSession(chatId, session))) return;
+  const extras =
+    session.step === "CONFIRM_PUBLISH" ? await countExtras(chatId, session) : 0;
+  await askStep(chatId, session, extras);
 }
 
 /* ============================================================
@@ -722,6 +896,20 @@ async function handleCallbackQuery(cb: any): Promise<void> {
   const data: string = cb.data || "";
   if (!chatId || !TOKEN) return;
   await answerCallbackQuery(TOKEN, cb.id);
+
+  // /yeni onayı — oturum yoksa da çalışmalı, bu yüzden session kontrolünden önce
+  if (data === "new:yes") {
+    await clearAll(chatId);
+    await startNewSession(chatId);
+    return;
+  }
+  if (data === "new:no") {
+    await tell(
+      chatId,
+      "↩️ Tamam, mevcut işe devam ediyoruz. Durum için /durum yaz.",
+    );
+    return;
+  }
 
   const session = await getSession(chatId);
   if (!session) {
@@ -737,13 +925,13 @@ async function handleCallbackQuery(cb: any): Promise<void> {
         chatId,
         "🎫 Etkinlik akışı henüz hazır değil — şimdilik Sanity Studio'dan eklenmeli. <i>Bekle Berke ekleyecek.</i>",
       );
-      await clearSession(chatId);
+      await clearAll(chatId);
       return;
     }
     if (t !== "rota" && t !== "yazi") return;
     session.type = t as ContentType;
     session.step = "ASK_TITLE";
-    await setSession(chatId, session);
+    if (!(await saveSession(chatId, session))) return;
     await askStep(chatId, session);
     return;
   }
@@ -785,7 +973,7 @@ async function handleCallbackQuery(cb: any): Promise<void> {
   }
 
   if (data === "publish:no") {
-    await clearSession(chatId);
+    await clearAll(chatId);
     await tell(chatId, "❌ İptal edildi. Yeni başlamak için /yeni");
     return;
   }
@@ -800,6 +988,22 @@ async function publishFromSession(
   session: Session,
 ): Promise<void> {
   const d = session.data;
+
+  // Sanity şemasında yazı için kategori zorunlu ama writeClient doğrulamıyor —
+  // eksikse yayımlamadan önce kullanıcıyı kategori adımına geri gönder.
+  if (session.type === "yazi" && !d.categoryRef) {
+    await tell(
+      chatId,
+      "❌ Kategori seçilmemiş — yazı kategorisiz yayımlanamaz. Lütfen kategori seç.",
+    );
+    session.step = "ASK_CATEGORY";
+    if (!(await saveSession(chatId, session))) return;
+    await askStep(chatId, session);
+    return;
+  }
+
+  const gallery = await resolveExtras(chatId, session);
+
   await tell(chatId, "⏳ Yayımlanıyor...");
   try {
     if (session.type === "rota") {
@@ -810,7 +1014,7 @@ async function publishFromSession(
         city: d.city || "Eskişehir",
         descriptionText: d.description || d.title!,
         mainImageAssetId: d.mainImageAssetId,
-        galleryImageAssetIds: d.extraImageAssetIds,
+        galleryImageAssetIds: gallery,
         tags: d.tags,
         metaTitle: d.metaTitle,
         metaDescription: d.metaDescription,
@@ -829,7 +1033,7 @@ async function publishFromSession(
         authorRef: d.authorRef,
         categoryRef: d.categoryRef,
         mainImageAssetId: d.mainImageAssetId,
-        galleryImageAssetIds: d.extraImageAssetIds,
+        galleryImageAssetIds: gallery,
         altText: d.altText,
         excerpt: d.excerpt,
         tags: d.tags,
@@ -843,7 +1047,7 @@ async function publishFromSession(
         `✅ <b>Yazı yayımlandı!</b>\n\n<b>${escapeHtml(d.title!)}</b>\n\n🔗 ${result.url}\n📝 ${result.studioUrl}`,
       );
     }
-    await clearSession(chatId);
+    await clearAll(chatId);
   } catch (e) {
     captureError(e, { route: "telegram-publish" });
     await tell(
@@ -859,30 +1063,39 @@ async function publishFromSession(
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleUpdate(update: any): Promise<void> {
+  // Düzenlenen mesajlar akışı bozuyor (aynı içerik ikinci kez işleniyor) — yok say
+  if (update.edited_message || update.edited_channel_post) return;
+
+  // Idempotency: Telegram timeout sonrası aynı update'i tekrar gönderiyor.
+  // Redis yoksa markUpdateSeen true döner, kontrol atlanır.
+  if (typeof update.update_id === "number") {
+    const fresh = await markUpdateSeen(update.update_id);
+    if (!fresh) return;
+  }
+
   // Callback query (button tıklama)
   if (update.callback_query) {
     const cb = update.callback_query;
     const fromId = String(cb.from?.id || "");
-    if (!ALLOWED_IDS.includes(fromId)) return;
+    if (!ALLOWED_IDS.includes(fromId)) {
+      // Spinner takılı kalmasın — yetkisiz de olsa query'yi cevapla
+      if (TOKEN && cb.id) await answerCallbackQuery(TOKEN, cb.id);
+      return;
+    }
     await handleCallbackQuery(cb);
     return;
   }
 
   // Message
-  const msg = update.message || update.edited_message;
+  const msg = update.message;
   if (!msg) return;
 
   const chatId: number | undefined = msg.chat?.id;
   const fromId = String(msg.from?.id || "");
   if (!chatId || !TOKEN) return;
 
-  if (!ALLOWED_IDS.includes(fromId)) {
-    await tell(
-      chatId,
-      `Bu bot Sanatın Rotası ekibine özeldir.\nSenin Telegram ID: <code>${fromId}</code>\n\nYetkilendirme için Berke'ye ulaş.`,
-    );
-    return;
-  }
+  // Yetkisiz kullanıcıya hiçbir bilgi verme — sessizce yok say
+  if (!ALLOWED_IDS.includes(fromId)) return;
 
   await handleMessage(chatId, msg);
 }
@@ -894,11 +1107,16 @@ export async function POST(req: NextRequest) {
       { status: 503 },
     );
   }
-  if (SECRET) {
-    const incoming = req.headers.get("x-telegram-bot-api-secret-token");
-    if (incoming !== SECRET) {
-      return NextResponse.json({ ok: false }, { status: 401 });
-    }
+  // Secret ZORUNLU — tanımsızsa endpoint kapalı (fail-closed).
+  if (!SECRET) {
+    return NextResponse.json(
+      { ok: false, error: "TELEGRAM_WEBHOOK_SECRET missing" },
+      { status: 503 },
+    );
+  }
+  const incoming = req.headers.get("x-telegram-bot-api-secret-token");
+  if (incoming !== SECRET) {
+    return NextResponse.json({ ok: false }, { status: 401 });
   }
   try {
     const update = await req.json();
@@ -915,12 +1133,22 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-export async function GET() {
-  return NextResponse.json({
-    ok: true,
-    service: "Sanatın Rotası Telegram Bot",
-    tokenConfigured: !!TOKEN,
-    secretConfigured: !!SECRET,
-    allowedUsers: ALLOWED_IDS.length,
-  });
+/**
+ * Health check. Yapılandırma detayları (secret/token/kullanıcı sayısı)
+ * sadece CRON_SECRET ile sorgulanabilir — herkese açık sızdırma yok.
+ */
+export async function GET(req: NextRequest) {
+  const adminSecret = process.env.CRON_SECRET;
+  const provided = req.nextUrl.searchParams.get("secret");
+  if (adminSecret && provided === adminSecret) {
+    return NextResponse.json({
+      ok: true,
+      service: "Sanatın Rotası Telegram Bot",
+      tokenConfigured: !!TOKEN,
+      secretConfigured: !!SECRET,
+      allowedUsers: ALLOWED_IDS.length,
+      sessionStorageEnabled,
+    });
+  }
+  return NextResponse.json({ ok: true });
 }

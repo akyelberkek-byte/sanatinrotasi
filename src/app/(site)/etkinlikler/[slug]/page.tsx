@@ -125,7 +125,7 @@ export default async function EventPage({ params }: Props) {
         </div>
       </header>
 
-      {event.mainImage && (
+      {event.mainImage?.asset && (
         <div className="mb-10 animate-fade-up stagger-1">
           <Image
             src={urlFor(event.mainImage).width(1600).height(900).fit("max").url()}

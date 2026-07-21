@@ -12,6 +12,9 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   diger: "Diğer",
 };
 
+// Sanity görsel alanı — asset yoksa urlFor boş string döner, guard'lar .asset'e bakar
+type SanityImage = { asset?: unknown; alt?: string };
+
 interface EventCardProps {
   event: {
     title: string;
@@ -19,7 +22,7 @@ interface EventCardProps {
     eventType: string;
     date?: string;
     location?: { name?: string; city?: string };
-    mainImage?: any;
+    mainImage?: SanityImage;
     price?: { isFree?: boolean; amount?: number };
     featured?: boolean;
   };
@@ -37,7 +40,7 @@ export default function EventCard({ event }: EventCardProps) {
       href={`/etkinlikler/${event.slug.current}`}
       className="group block border border-ink/10 hover:border-accent/30 transition-colors"
     >
-      {event.mainImage && (
+      {!!event.mainImage?.asset && (
         <div className="relative overflow-hidden aspect-[16/9]">
           <Image
             src={urlFor(event.mainImage).width(600).height(340).url()}

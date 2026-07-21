@@ -36,7 +36,7 @@ export default function EditorsPickSection({ articles }: Props) {
               href={`/yazilar/${article.slug?.current}`}
               className={`group block ${isFeatured ? "md:col-span-2 md:row-span-1" : ""}`}
             >
-              {article.mainImage && (
+              {article.mainImage?.asset && (
                 <div
                   className={`relative overflow-hidden mb-4 ${
                     isFeatured ? "aspect-[16/10]" : "aspect-[4/3]"

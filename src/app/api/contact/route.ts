@@ -4,7 +4,12 @@ import { writeClient } from "@/sanity/writeClient";
 import { contactLimiter, getClientIp } from "@/lib/rateLimit";
 import { captureError } from "@/lib/observability";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Resend'i lazy oluştur — RESEND_API_KEY yoksa constructor throw ediyor ve
+// `next build` "Collecting page data" aşamasında patlıyordu (CI/preview build'leri).
+function getResend(): Resend | null {
+  const key = process.env.RESEND_API_KEY;
+  return key ? new Resend(key) : null;
+}
 
 export const runtime = "nodejs";
 export const maxDuration = 300; // 5 dakika — büyük dosyalar için
@@ -25,6 +30,7 @@ type UploadedAsset = {
   url: string;
   size: number;
   mimeType: string;
+  assetId: string;
 };
 
 async function uploadToSanity(file: File): Promise<UploadedAsset> {
@@ -47,6 +53,7 @@ async function uploadToSanity(file: File): Promise<UploadedAsset> {
     url: asset.url,
     size: file.size,
     mimeType: mime,
+    assetId: asset._id,
   };
 }
 
@@ -197,7 +204,7 @@ export async function POST(request: NextRequest) {
             .map(
               (a) =>
                 `<li style="margin-bottom: 6px;">
-                  <a href="${a.url}" target="_blank">${escapeHtml(
+                  <a href="${escapeHtml(a.url)}" target="_blank">${escapeHtml(
                     a.originalName
                   )}</a>
                   <span style="color: #b8b0a2; font-size: 12px;"> — ${Math.round(
@@ -209,29 +216,100 @@ export async function POST(request: NextRequest) {
         </ul>`
         : "";
 
-    await resend.emails.send({
-      from: "Sanatın Rotası İletişim <iletisim@sanatinrotasi.com>",
-      to: [
-        "akyelberke@gmail.com",
-        "ssanatinrotasii@gmail.com",
-        "bilgi@sanatinrotasi.com",
-      ],
-      subject: `İletişim Formu: ${subject}`,
-      replyTo: email,
-      html: `
-        <div style="font-family: Georgia, serif; max-width: 640px; padding: 20px; color: #1a1a18;">
-          <h2 style="font-size: 20px;">Yeni İletişim Mesajı</h2>
-          <p><strong>Ad:</strong> ${escapeHtml(name)}</p>
-          <p><strong>E-posta:</strong> ${escapeHtml(email)}</p>
-          <p><strong>Konu:</strong> ${escapeHtml(subject)}</p>
-          <hr style="border: none; border-top: 1px solid #ebe6db;" />
-          <p style="white-space: pre-wrap;">${escapeHtml(message)}</p>
-          ${externalLinkHtml}
-          ${attachmentsHtml}
-        </div>
-      `,
-    });
+    // 1) ÖNCE Sanity'ye kaydet — mail gitmese bile mesaj kaybolmasın.
+    let savedId: string | null = null;
+    let saveError: unknown = null;
+    try {
+      const doc = await writeClient.create({
+        _type: "contactMessage",
+        name,
+        email,
+        subject,
+        message,
+        ...(externalLink ? { externalLink } : {}),
+        attachments: uploaded.map((a, i) => ({
+          _key: `att-${i}-${a.assetId}`,
+          _type: "contactAttachment",
+          originalName: a.originalName,
+          url: a.url,
+          size: a.size,
+          mimeType: a.mimeType,
+          asset: { _type: "reference", _ref: a.assetId, _weak: true },
+        })),
+        emailSent: false,
+        createdAt: new Date().toISOString(),
+        handled: false,
+      });
+      savedId = doc._id;
+    } catch (err) {
+      saveError = err;
+      captureError(err, { route: "/api/contact", phase: "saveContactMessage" });
+    }
 
+    // 2) SONRA mail gönder — best effort.
+    const resend = getResend();
+    let emailSent = false;
+    if (!resend) {
+      captureError(new Error("RESEND_API_KEY tanımlı değil — iletişim maili gönderilemedi"), {
+        route: "/api/contact",
+      });
+    } else {
+      try {
+        const sent = await resend.emails.send({
+          from: "Sanatın Rotası İletişim <iletisim@sanatinrotasi.com>",
+          to: [
+            "akyelberke@gmail.com",
+            "ssanatinrotasii@gmail.com",
+            "bilgi@sanatinrotasi.com",
+          ],
+          subject: `İletişim Formu: ${subject}`,
+          replyTo: email,
+          html: `
+            <div style="font-family: Georgia, serif; max-width: 640px; padding: 20px; color: #1a1a18;">
+              <h2 style="font-size: 20px;">Yeni İletişim Mesajı</h2>
+              <p><strong>Ad:</strong> ${escapeHtml(name)}</p>
+              <p><strong>E-posta:</strong> ${escapeHtml(email)}</p>
+              <p><strong>Konu:</strong> ${escapeHtml(subject)}</p>
+              <hr style="border: none; border-top: 1px solid #ebe6db;" />
+              <p style="white-space: pre-wrap;">${escapeHtml(message)}</p>
+              ${externalLinkHtml}
+              ${attachmentsHtml}
+            </div>
+          `,
+        });
+        // Resend throw etmez, hatayı response içinde döner
+        if (sent.error) {
+          captureError(sent.error, { route: "/api/contact", phase: "sendEmail" });
+        } else {
+          emailSent = true;
+        }
+      } catch (err) {
+        captureError(err, { route: "/api/contact", phase: "sendEmail" });
+      }
+    }
+
+    // 3) Mail gittiyse kaydı işaretle (patch hatası akışı bozmasın).
+    if (emailSent && savedId) {
+      try {
+        await writeClient.patch(savedId).set({ emailSent: true }).commit();
+      } catch (err) {
+        captureError(err, { route: "/api/contact", phase: "patchEmailSent" });
+      }
+    }
+
+    // Sanity yazma başarısızsa kullanıcıya hata dön — sessiz veri kaybı olmasın.
+    if (!savedId) {
+      captureError(
+        saveError ?? new Error("İletişim mesajı Sanity'ye kaydedilemedi"),
+        { route: "/api/contact", phase: "totalFailure", emailSent }
+      );
+      return NextResponse.json(
+        { error: "Mesaj kaydedilemedi, lütfen tekrar deneyin." },
+        { status: 500 }
+      );
+    }
+
+    // Kayıt durduğu sürece başarı dön — mail gitmese bile mesaj kaybolmadı.
     return NextResponse.json({ success: true, uploaded: uploaded.length });
   } catch (error) {
     captureError(error, { route: "/api/contact" });

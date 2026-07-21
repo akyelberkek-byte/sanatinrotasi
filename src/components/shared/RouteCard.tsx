@@ -2,13 +2,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { urlFor } from "@/sanity/image";
 
+// Sanity görsel alanı — asset yoksa urlFor boş string döner, guard'lar .asset'e bakar
+type SanityImage = { asset?: unknown; alt?: string };
+
 interface RouteCardProps {
   route: {
     title: string;
     slug: { current: string };
     subtitle?: string;
     city?: string;
-    mainImage?: any;
+    mainImage?: SanityImage;
     duration?: string;
     difficulty?: string;
     stopCount?: number;
@@ -27,7 +30,7 @@ export default function RouteCard({ route }: RouteCardProps) {
       href={`/rotalar/${route.slug.current}`}
       className="group block border-t-2 border-ink"
     >
-      {route.mainImage && (
+      {!!route.mainImage?.asset && (
         <div className="relative overflow-hidden aspect-[3/2] mt-4">
           <Image
             src={urlFor(route.mainImage).width(600).height(400).url()}

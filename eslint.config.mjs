@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build çıktıları + yedekler: devasa bundle'lar ESLint'i bellek taşmasıyla çökertiyor
+    ".open-next/**",
+    ".vercel/**",
+    ".wrangler/**",
+    "backups/**",
   ]),
 ]);
 

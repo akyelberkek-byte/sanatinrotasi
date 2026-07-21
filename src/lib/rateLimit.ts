@@ -107,16 +107,28 @@ export function createRateLimiter(opts: Partial<RateLimitOptions> = {}, prefix =
 
 /**
  * Request'ten IP adresi çıkarır. Vercel/Cloudflare header'larını destekler.
+ *
+ * Sıralama GÜVENİLİRLİK önceliklidir: `x-forwarded-for` istemci tarafından
+ * uydurulabildiği için en sona bırakıldı. Platformun kendi yazdığı
+ * (ve gelen istekteki değeri ezen) header'lar önce denenir — aksi halde
+ * rate limit sahte header ile tamamen bypass edilebiliyordu.
  */
 export function getClientIp(request: NextRequest): string {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0].trim();
-  }
-  const realIp = request.headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
+  // Cloudflare (Workers/open-next hedefi) — edge tarafından yazılır
   const cfIp = request.headers.get("cf-connecting-ip");
   if (cfIp) return cfIp.trim();
+
+  // Vercel — platform tarafından yazılır
+  const vercelIp = request.headers.get("x-vercel-forwarded-for");
+  if (vercelIp) return vercelIp.split(",")[0].trim();
+
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+
+  // Son çare: spoof edilebilir, ilk IP'yi al
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) return forwardedFor.split(",")[0].trim();
+
   return "unknown";
 }
 

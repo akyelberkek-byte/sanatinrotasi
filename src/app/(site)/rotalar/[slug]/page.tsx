@@ -19,6 +19,14 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 
 type Props = { params: Promise<{ slug: string }> };
 
+// Rota durağı — Sanity'den gelen alanların hepsi opsiyonel olabilir
+type RouteStop = {
+  name?: string;
+  description?: string;
+  image?: { asset?: unknown } | null;
+  relatedArticle?: { title?: string; slug?: { current?: string } } | null;
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const route = await findRouteBySlug(slug);
@@ -101,7 +109,7 @@ export default async function RoutePage({ params }: Props) {
       </header>
 
       {/* Main image */}
-      {route.mainImage && (
+      {!!route.mainImage?.asset && (
         <div className="mb-10 animate-fade-up stagger-1">
           <Image
             src={urlFor(route.mainImage).width(1600).height(900).fit("max").url()}
@@ -132,7 +140,7 @@ export default async function RoutePage({ params }: Props) {
         <section className="animate-fade-up stagger-3">
           <SectionLabel label="Rotadaki Duraklar" className="mb-6 block" />
           <div className="space-y-8">
-            {route.stops.map((stop: any, i: number) => (
+            {route.stops.map((stop: RouteStop, i: number) => (
               <div key={i} className="border-t-2 border-ink pt-6 grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
                 <div className="font-display text-3xl font-black text-accent/30">
                   {String(i + 1).padStart(2, "0")}
@@ -144,24 +152,31 @@ export default async function RoutePage({ params }: Props) {
                       {stop.description}
                     </p>
                   )}
-                  {stop.image && (
+                  {!!stop.image?.asset && (
                     <div className="mt-4">
                       <Image
                         src={urlFor(stop.image).width(800).height(450).url()}
-                        alt={stop.name}
+                        alt={stop.name || route.title}
                         width={800}
                         height={450}
                         className="w-full"
                       />
                     </div>
                   )}
-                  {stop.relatedArticle && (
-                    <Link
-                      href={`/yazilar/${stop.relatedArticle.slug.current}`}
-                      className="inline-block mt-3 font-sans text-[0.65rem] uppercase tracking-[0.2em] text-accent link-underline"
-                    >
-                      İlgili Yazı: {stop.relatedArticle.title}
-                    </Link>
+                  {/* Slug'ı olmayan referans (Studio'da generate edilmemiş) link yerine düz metin */}
+                  {stop.relatedArticle?.title && (
+                    stop.relatedArticle.slug?.current ? (
+                      <Link
+                        href={`/yazilar/${stop.relatedArticle.slug.current}`}
+                        className="inline-block mt-3 font-sans text-[0.65rem] uppercase tracking-[0.2em] text-accent link-underline"
+                      >
+                        İlgili Yazı: {stop.relatedArticle.title}
+                      </Link>
+                    ) : (
+                      <span className="inline-block mt-3 font-sans text-[0.65rem] uppercase tracking-[0.2em] text-warm-gray">
+                        İlgili Yazı: {stop.relatedArticle.title}
+                      </span>
+                    )
                   )}
                 </div>
               </div>
@@ -213,7 +228,7 @@ export default async function RoutePage({ params }: Props) {
             touristType: "Art & Culture",
             itinerary:
               Array.isArray(route.stops) && route.stops.length > 0
-                ? route.stops.map((s: any) => ({
+                ? route.stops.map((s: RouteStop) => ({
                     "@type": "TouristAttraction",
                     name: s.name,
                     description: s.description,
