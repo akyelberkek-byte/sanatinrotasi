@@ -73,11 +73,12 @@ export const contactMessage = defineType({
               type: "string",
             }),
             defineField({
-              name: "asset",
-              title: "Sanity Dosyası",
-              type: "reference",
-              to: [{ type: "sanity.imageAsset" }, { type: "sanity.fileAsset" }],
-              weak: true,
+              // Sanity asset _id'si düz string olarak saklanır.
+              // reference(sanity.imageAsset/fileAsset) schema hatası veriyordu;
+              // url + mimeType zaten mevcut, ref'e gerek yok.
+              name: "assetId",
+              title: "Sanity Asset ID",
+              type: "string",
             }),
           ],
           preview: {

@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
           url: a.url,
           size: a.size,
           mimeType: a.mimeType,
-          asset: { _type: "reference", _ref: a.assetId, _weak: true },
+          assetId: a.assetId,
         })),
         emailSent: false,
         createdAt: new Date().toISOString(),
