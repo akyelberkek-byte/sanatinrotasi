@@ -41,8 +41,21 @@ type Results = {
   query: string;
 };
 
+/**
+ * Adresteki ?q= ile açılış.
+ *
+ * Sanatabu uygulamasındaki "Sanatın Rotası'nda oku" düğmesi eser adını
+ * ?q= ile buraya gönderiyor; parametre okunmazsa kullanıcı boş arama
+ * kutusuna düşüyordu.
+ */
+function initialQuery(): string {
+  if (typeof window === "undefined") return "";
+  const q = new URLSearchParams(window.location.search).get("q") ?? "";
+  return q.slice(0, 120);
+}
+
 export default function SearchClient() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<Results | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
