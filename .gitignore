@@ -46,3 +46,7 @@ next-env.d.ts
 # cloudflare
 /.open-next/
 /.wrangler/
+
+# Playwright çıktıları
+test-results/
+playwright-report/

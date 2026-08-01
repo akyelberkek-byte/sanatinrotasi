@@ -42,6 +42,17 @@ test.describe("smoke", () => {
     expect(response?.status()).toBeLessThan(400);
   });
 
+  test("sanatabu sayfası yükleniyor", async ({ page }) => {
+    const response = await page.goto("/sanatabu");
+    expect(response?.status()).toBeLessThan(400);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Sanat");
+  });
+
+  test("sanatabu gizlilik sayfası yükleniyor", async ({ page }) => {
+    const response = await page.goto("/sanatabu/gizlilik");
+    expect(response?.status()).toBeLessThan(400);
+  });
+
   test("bilinmeyen URL 404 dönüyor", async ({ page }) => {
     const response = await page.goto("/bu-sayfa-yok-12345");
     expect([404, 200]).toContain(response?.status() ?? 0);

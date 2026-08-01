@@ -19,6 +19,7 @@ const NAV_LINKS = [
   { href: "/hakkinda", label: "Hakkında" },
   { href: "/topluluk", label: "Topluluk" },
   { href: "/iletisim", label: "İletişim" },
+  { href: "/sanatabu", label: "Sanatabu" },
 ];
 
 /**
@@ -116,13 +117,22 @@ interface NavbarProps {
   logoUrl?: string;
 }
 
+/**
+ * Masaüstü menü eşiği neden 1340px?
+ *
+ * Menüdeki dokuz bağlantı + Giriş/Kayıt + 'Sanatını Tanıt' düğmesi ölçüldüğünde
+ * (logo 204 + boşluk 64 + bağlantılar 966 + kenar dolgusu 96) 1330px istiyor.
+ * Tailwind'in lg (1024) ve xl (1280) eşiklerinde satır TAŞIYOR — 1024'te
+ * 'Sanatını Tanıt' ekrandan taşıyordu. Bu yüzden eşik ölçülen genişliğin hemen
+ * üstüne alındı; altında tam işlevli hamburger menü kullanılır.
+ */
 export default function Navbar({ logoUrl }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const logo = logoUrl || "/images/logo.png";
 
   return (
     <nav className="border-b-2 border-ink" aria-label="Ana menü">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-5 flex items-center justify-between gap-8 lg:gap-10 xl:gap-16">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-5 flex items-center justify-between gap-8 lg:gap-10 2xl:gap-16">
         <Link href="/" className="flex items-center gap-3 group shrink-0">
           <Image
             src={logo}
@@ -140,7 +150,7 @@ export default function Navbar({ logoUrl }: NavbarProps) {
           </div>
         </Link>
 
-        <div className="hidden lg:flex items-center gap-3 xl:gap-5">
+        <div className="hidden min-[1340px]:flex items-center gap-3 2xl:gap-5">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -150,14 +160,14 @@ export default function Navbar({ logoUrl }: NavbarProps) {
               {link.label}
             </Link>
           ))}
-          <div className="ml-1 xl:ml-3">
+          <div className="ml-1 2xl:ml-3">
             {hasClerkKeys ? <AuthButtons /> : <FallbackAuthButtons />}
           </div>
         </div>
 
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="lg:hidden flex flex-col gap-1.5 p-2"
+          className="min-[1340px]:hidden flex flex-col gap-1.5 p-2"
           aria-label={mobileOpen ? "Menüyü kapat" : "Menüyü aç"}
           aria-expanded={mobileOpen}
           aria-controls="mobile-menu"
@@ -169,7 +179,7 @@ export default function Navbar({ logoUrl }: NavbarProps) {
       </div>
 
       {mobileOpen && (
-        <div id="mobile-menu" className="lg:hidden border-t border-ink/10 bg-cream animate-fade-down" role="navigation" aria-label="Mobil menü">
+        <div id="mobile-menu" className="min-[1340px]:hidden border-t border-ink/10 bg-cream animate-fade-down" role="navigation" aria-label="Mobil menü">
           <div className="px-6 py-4 flex flex-col gap-4">
             {NAV_LINKS.map((link) => (
               <Link
